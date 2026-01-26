@@ -19,12 +19,11 @@ It is implemented using literate programming with
 is in the form of a bookdown, available in
 [create-randhclust/](create-randhclust/). For now, to read this as a
 bookdown, please download the repo and then open
-[docs/create-randhclust/index.html](docs/create-randhclust/index.html)
-in a browser.
+[docs/create/index.html](docs/create/index.html) in a browser.
 
 To modify the code in this R package, modify the `.Rmd` files in the
-`create-randhclust/` directory and then (from an R session in this
-directory) run the following:
+[create-randhclust/](create-randhclust/) directory and then (from an R
+session in this directory) run the following:
 
 ``` r
 litr::render("create-randhclust/index.Rmd")
