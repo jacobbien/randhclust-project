@@ -7,8 +7,8 @@
 
 <!-- badges: end -->
 
-This repository contains the `randhclust` R package, which can be
-installed as follows:
+This repository contains the `randhclust` R package, which (once this
+repo is public) can be installed as follows:
 
 ``` r
 remotes::install_github("jacobbien/randhclust-project", subdir = "randhclust")
@@ -16,8 +16,8 @@ remotes::install_github("jacobbien/randhclust-project", subdir = "randhclust")
 
 It is implemented using literate programming with
 [litr](https://jacobbien.github.io/litr-project/). Thus, the source code
-is in the form of a bookdown, available in `create-randhclust`. For now,
-to read this as a bookdown, please download the repo and then open
+is in the form of a bookdown, available in \[create-randhclust\]. For
+now, to read this as a bookdown, please download the repo and then open
 `docs/create-randhclust/index.html` in a browser.
 
 To modify the code in this R package, modify the `.Rmd` files in the
