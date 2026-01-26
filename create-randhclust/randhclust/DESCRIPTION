@@ -1,0 +1,28 @@
+Package: randhclust
+Title: Hierachical Clustering With Confidence
+Version: 0.0.0.9000
+Authors@R: c(
+    person("Di", "Wu", , "judydw@umich.edu", role = "aut"),
+    person("Jacob", "Bien", , "jbien@usc.edu", role = c("aut", "cre")),
+    person("Snigdha", "Panigrahi", , "psnigdha@umich.edu", role = "aut")
+  )
+Description: This package implements randomized hierarchical clustering,
+    computes p-values about whether a merge should occur, and implements a
+    principled procedure for choosing K.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.3
+Imports: 
+    dplyr,
+    ggplot2,
+    magrittr,
+    Matrix,
+    rlang,
+    stats,
+    tibble
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+LitrVersionUsed: 0.9.3
+LitrId: e18b3c82336d8b989622d9b084145144

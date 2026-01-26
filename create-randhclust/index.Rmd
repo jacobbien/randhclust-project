@@ -1,0 +1,22 @@
+---
+title: "Creating the ``r params$package_name`` R package"
+author: "Jacob Bien"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+knit: litr::render
+output: litr::litr_gitbook
+params:
+  package_name: "randhclust"
+  package_parent_dir: "." # <-- relative to this file's location
+documentclass: book
+---
+
+# Introduction
+
+This document is a literate programming implementation of the ``r params$package_name`` R package, which makes the algorithms proposed in [Hierarchical Clustering With Confidence](https://www.arxiv.org/abs/2512.06522) (Wu, Bien, Panigrahi 2025) accessible to R users.
+
+**Note:** If you are working in RStudio, you can simply press "Knit" to render this bookdown (and open `_book/index.html` to see the result).  More generally, in a console you can run the following:
+
+```{r, eval = FALSE}
+litr::render("index.Rmd", output_format = litr::litr_gitbook())
+```

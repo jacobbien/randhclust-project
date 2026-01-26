@@ -1,0 +1,46 @@
+# Package setup
+
+Every R package needs a DESCRIPTION file, so we start by specifying this information:
+
+```{r package-setup, message=FALSE, results='hide'}
+usethis::create_package(
+  path = ".",
+  fields = list(
+    Package = params$package_name,
+    Version = "0.0.0.9000",
+    Title = "Hierachical Clustering With Confidence",
+    Description = "This package implements randomized hierarchical clustering, computes p-values about whether a merge should occur, and implements a principled procedure for choosing K.",
+    `Authors@R` = c(
+      person(
+        given = "Di",
+        family = "Wu",
+        email = "judydw@umich.edu",
+        role = "aut"
+      ),
+      person(
+        given = "Jacob",
+        family = "Bien",
+        email = "jbien@usc.edu",
+        role = c("aut", "cre")
+      ),
+      person(
+        given = "Snigdha",
+        family = "Panigrahi",
+        email = "psnigdha@umich.edu",
+        role = "aut"
+      )
+    )
+  )
+)
+usethis::use_mit_license(copyright_holder = "Wu, Bien, Panigrahi")
+```
+
+Although it's not required, it can be nice to add some package-level documentation.  This is what will show up when someone types `package?<your-package-name>` in the console.
+
+```{package_doc}
+#' A Package Defined in a Bookdown
+#'
+#' This package uses `litr` to define an R package through writing a `bookdown`.
+#' 
+#' @docType package
+```
