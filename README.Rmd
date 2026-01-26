@@ -1,0 +1,46 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  eval = FALSE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# `randhclust` project
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+This repository contains the `randhclust` R package, which can be installed as follows:
+
+```{r}
+remotes::install_github("jacobbien/randhclust-project", subdir = "randhclust")
+```
+
+It is implemented using literate programming with [litr](https://jacobbien.github.io/litr-project/).  Thus, the source code is in the form of a bookdown, available in `create-randhclust`.  For now, to read this as a bookdown, please download the repo and then open `docs/create-randhclust/index.html` in a browser.
+
+To modify the code in this R package, modify the `.Rmd` files in the `create-randhclust/` directory and then (from an R session in this directory) run the following:
+
+```{r}
+litr::render("create-randhclust/index.Rmd")
+fs::dir_copy("create-randhclust/_book", "docs/create", overwrite = TRUE)
+fs::dir_delete("create-randhclust/_book")
+fs::dir_copy("create-randhclust/randhclust", "randhclust", overwrite = TRUE)
+fs::dir_delete("create-randhclust/randhclust")
+fs::dir_delete("create-randhclust/_main_files/")
+```
+
+To install the latest version of `litr`, run
+
+```{r}
+remotes::install_github("jacobbien/litr-project", subdir = "litr")
+```
+
