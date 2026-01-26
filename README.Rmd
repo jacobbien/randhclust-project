@@ -38,6 +38,13 @@ fs::dir_delete("create-randhclust/randhclust")
 fs::dir_delete("create-randhclust/_main_files/")
 ```
 
+To install the R package, for now you can run the following in a local R session from this directory.
+
+```{r}
+devtools::install("randhclust/")
+```
+
+
 To install the latest version of `litr`, run
 
 ```{r}

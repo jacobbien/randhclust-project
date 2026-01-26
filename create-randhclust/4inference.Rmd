@@ -646,4 +646,12 @@ for (i in seq(nsim)) {
 pvals2
 ```
 
+In principle, this should be identical to the p-values we got with the other approach.  Let's check how close they are:
+
+```{r}
+range(pvals-pvals2)
+```
+
+
+
 
