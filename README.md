@@ -16,9 +16,11 @@ remotes::install_github("jacobbien/randhclust-project", subdir = "randhclust")
 
 It is implemented using literate programming with
 [litr](https://jacobbien.github.io/litr-project/). Thus, the source code
-is in the form of a bookdown, available in \[create-randhclust\]. For
-now, to read this as a bookdown, please download the repo and then open
-`docs/create-randhclust/index.html` in a browser.
+is in the form of a bookdown, available in
+[create-randhclust/](create-randhclust/). For now, to read this as a
+bookdown, please download the repo and then open
+[docs/create-randhclust/index.html](docs/create-randhclust/index.html)
+in a browser.
 
 To modify the code in this R package, modify the `.Rmd` files in the
 `create-randhclust/` directory and then (from an R session in this
