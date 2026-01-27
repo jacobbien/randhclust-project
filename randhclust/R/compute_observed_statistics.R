@@ -39,5 +39,6 @@ compute_observed_statistics <- function(x, clust1, clust2) {
   
   a <- between / within
   ratio <- (n1 + n2 - 2) / scaling * a
+  #ratio <- (n1 + n2 - 2) * a
   list(ratio = ratio, b = b, w = w, a = a)
 }

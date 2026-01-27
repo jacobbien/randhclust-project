@@ -71,6 +71,8 @@ adaptive_integrate <- function(f, observed_target, wide_grid_min, wide_grid_max,
   # Compute p-value
   # Normalize the posterior
   posterior <- f_narrow_fine
+  
+  #posterior <- posterior/max(posterior)
   posterior_sum <- sum(posterior)
   
   if (posterior_sum == 0 || is.nan(posterior_sum)) {

@@ -97,6 +97,7 @@ compute_observed_statistics <- function(x, clust1, clust2) {
   
   a <- between / within
   ratio <- (n1 + n2 - 2) / scaling * a
+  #ratio <- (n1 + n2 - 2) * a
   list(ratio = ratio, b = b, w = w, a = a)
 }
 ```
@@ -104,6 +105,7 @@ compute_observed_statistics <- function(x, clust1, clust2) {
 ```{r}
 usethis::use_package("Matrix")
 ```
+
 
 Let's test that this function works as expected.
 
@@ -114,10 +116,11 @@ testthat::test_that("compute_observed_statistics() works", {
   clust1 <- 1:2
   clust2 <- 3
   # working directly from the formula in the paper:
+  scaling = 1/2 +1/1
   bcss <- 2 * 1 / 3 * (0-6)^2
   wcss <- 1 + 1 + 0
   out <- compute_observed_statistics(x, clust1, clust2)
-  testthat::expect_equal(out$ratio, (3 - 2) * bcss / wcss)
+  testthat::expect_equal(out$ratio, (3 - 2)* bcss / wcss)
   testthat::expect_equal(out$a, sum(out$b^2) / sum(out$w^2))
   
   # and a two-dimensional example with four points:
@@ -126,11 +129,12 @@ testthat::test_that("compute_observed_statistics() works", {
               ncol = 2)
   clust1 <- 1:2
   clust2 <- 3:4
+  scaling = 1/2 +1/2
   # working directly from the formula in the paper:
   bcss <- 2 * 2 / 4 * sum(c(6, 2)^2)
   wcss <- 1 + 1 + 0 + 0
   out <- compute_observed_statistics(x, clust1, clust2)
-  testthat::expect_equal(out$ratio, (4 - 2) * bcss / wcss)
+  testthat::expect_equal(out$ratio, (4 - 2)* bcss / wcss)
   testthat::expect_equal(out$a, sum(out$b^2) / sum(out$w^2))
 })
 ```
@@ -239,13 +243,13 @@ compute_selected_probs <- function(x_new, hc_sequence, dist_func, linkage_func, 
   d <- as.matrix(dist_func(x_new))
   d_clusts <- d
   for (i in seq(num_steps)) {
+    #print(d_clusts)
     # calculate probabilities
     probs <- get_merge_probs(d_clusts, tau)
-    
+   
     # get the chosen two clusters from the current clustering
     c1 <- hc_sequence$merges[i, 1]
     c2 <- hc_sequence$merges[i, 2]
-    
     # record probability for chosen pair
     probs_selected[i] <- probs[c1, c2] + probs[c2, c1] # matrix is lower tri
     if (i == num_steps) break
@@ -266,9 +270,11 @@ compute_selected_probs <- function(x_new, hc_sequence, dist_func, linkage_func, 
     d_clusts <- rbind(d_new, d_clusts)
     d_clusts <- cbind(c(0, d_new), d_clusts)
   }
+  
   return(probs_selected)
 }
 ```
+
 
 Let's make some tests based on the previous example:
 
@@ -339,24 +345,34 @@ integrand <- function(r, t, x, hc_sequence, obs_statistics, dist_func,
   n1 <- length(hc_sequence$clusts[[t]][[hc_sequence$merges[t, 1]]])
   n2 <- length(hc_sequence$clusts[[t]][[hc_sequence$merges[t, 2]]])
   
+  scaling = 1/n1+1/n2
   fr <- sqrt(r / (n1 + n2 - 2 + r))
-  x_new <- with(obs_statistics, # all variables other than fr come from list
-       sqrt(1+1/a) * fr * b + sqrt((1+a) * (1-fr^2)) * w + (x - b - w))
+  b = obs_statistics$b
+  w = obs_statistics$w
+  bnorm = Matrix::norm(b, "F")
+  wnorm = Matrix::norm(w, "F")
+  x_new = sqrt(bnorm^2/scaling + wnorm^2)*(fr * b/bnorm + sqrt(1-fr^2) * w/wnorm) + (x - b/sqrt(scaling) - w)
+  
+  
   probs <- compute_selected_probs(x_new, hc_sequence, dist_func, linkage_func, tau)
+  #print(probs)
 #  if (df(r, df1 = p, df2 = p * (n1 + n2 - 2)) * prod(probs) < 0) browser()
   return(df(r, df1 = p, df2 = p * (n1 + n2 - 2)) * prod(probs))
 }
 ```
 
+
+
+
 Let's make a plot of the integrand:
 
 ```{r}
 x <- ex1$x
-#  x <- matrix(c(1, 2,     10, 14,              40), ncol = 1)
+x <- matrix(c(1, 2,     10, 14,              40), ncol = 1)
 set.seed(123)
 hc <- hclust_randomized(dist(x), tau = 0.2)
 hc_sequence <- get_hclust_sequence(hc)
-tt <- 59 # last merge, when only two clusters remain
+tt <- 3 # last merge, when only two clusters remain
 cl <- hc_sequence$clusts[[tt]] 
 obs_stat <- compute_observed_statistics(x, cl[[1]], cl[[2]])
 
@@ -405,22 +421,44 @@ compute_pvalue <- function(t, x, hc, hc_sequence = NULL, obs_statistics = NULL, 
     clust2 <- hc_sequence$clusts[[t]][[hc_sequence$merges[t, 2]]]
     obs_statistics <- compute_observed_statistics(x, clust1, clust2)
   }
+  
+  
+  
+#====verify decomposition========
+#    n1 <- length(hc_sequence$clusts[[t]][[hc_sequence$merges[t, 1]]])
+  #   n2 <- length(hc_sequence$clusts[[t]][[hc_sequence$merges[t, 2]]])
+  #   scaling = 1/n1+1/n2
+  #   
+  #   b = obs_statistics$b
+  #   w = obs_statistics$w
+  #   bnorm = Matrix::norm(b, "F")
+  #   wnorm = Matrix::norm(w, "F")
+  #   ratio = obs_statistics$ratio
+  #   fr <- sqrt(ratio / (n1 + n2 - 2 + ratio))
+  # 
+  #   x_check <- sqrt(bnorm^2/scaling + wnorm^2)*(fr * b/bnorm + sqrt(1-fr^2) * w/wnorm) +   (x -b/sqrt(scaling) - w)
+  # print(max(abs(x_check - x)) < 1e-8)
+# =================================
+  
   integrand_func <- Vectorize(function(r) {
     integrand(r=r,
               t=t,
               x=x,
               hc_sequence=hc_sequence,
               obs_statistics=obs_statistics,
-              dist_func = dist,
+              dist_func = dist_func,
               linkage_func = hc$linkage_func,
               tau = hc$tau)
   })
   # rather than 1 - I(r)/I(infty), let's try 1 / [1 + I(r) / I(r to inf)]
-  # numerator <- stats::integrate(integrand_func, 0, obs_statistics$ratio)
-  # denominator <- stats::integrate(integrand_func, 0, Inf)
+   #numerator <- stats::integrate(integrand_func, 0, obs_statistics$ratio)
+   #denominator <- stats::integrate(integrand_func, 0, Inf)
+   #numerator <- integrate(integrand_func, 0, obs_statistics$ratio, rel.tol=1e-8)
+  #denominator <- integrate(integrand_func, 0, Inf, rel.tol=1e-8, subdivisions=2000)
   numerator <- stats::integrate(integrand_func, 0, obs_statistics$ratio)
   extra <- stats::integrate(integrand_func, obs_statistics$ratio, Inf)
-#  return(1 - numerator$value / denominator$value)
+  #return(1 - numerator$value / denominator$value)
+  
   return(1 - 1 / (1 + extra$value / numerator$value))
 }
 ```
@@ -439,11 +477,11 @@ Let's see if the p-values have a uniform distribution under the global null:
 
 ```{r}
 set.seed(123)
-n <- 40
+n <- 60
 p <- 2
-tt <- 39 # test when there are only two clusters
-tau <- 0.2
-nsim <- 4
+tt <- 59 # test when there are only two clusters
+tau <- 0.05
+nsim <- 100
 pvals <- rep(NA, nsim)
 for (i in seq(nsim)) {
   x <- matrix(rnorm(n * p), n, p)
@@ -455,6 +493,17 @@ for (i in seq(nsim)) {
 ```{r}
 pvals
 ```
+
+```{r}
+qqplot(
+  (ppoints(length(pvals))),
+  (sort(pvals)),
+  xlab = "Expected",
+  ylab = "Observed"
+)
+abline(0, 1, col = "red")
+```
+
 
 Hmm, apparently not!
 
@@ -542,6 +591,8 @@ adaptive_integrate <- function(f, observed_target, wide_grid_min, wide_grid_max,
   # Compute p-value
   # Normalize the posterior
   posterior <- f_narrow_fine
+  
+  #posterior <- posterior/max(posterior)
   posterior_sum <- sum(posterior)
   
   if (posterior_sum == 0 || is.nan(posterior_sum)) {
@@ -618,7 +669,7 @@ compute_pvalue_grid <- function(t, x, hc, hc_sequence = NULL, obs_statistics = N
     f = integrand_func,
     wide_grid_min = 0.00001,
     wide_grid_max = 180,
-    num_coarse = 1000,
+    num_coarse = 20,
     num_fine = 2000,
     buffer = 3
     )
@@ -632,11 +683,26 @@ Let's see if the p-values have a uniform distribution under the global null:
 
 ```{r}
 set.seed(123)
-n <- 40
+n <- 30
 p <- 2
-tt <- 39 # test when there are only two clusters
-tau <- 0.2
-nsim <- 4
+tt <- 29 # test when there are only two clusters
+tau <- 0.05
+nsim <- 10
+pvals <- rep(NA, nsim)
+for (i in seq(nsim)) {
+  x <- matrix(rnorm(n * p), n, p)
+  hc <- hclust_randomized(dist(x), tau = tau)
+  pvals[i] <- compute_pvalue(tt, x, hc, dist_func = dist)
+}
+```
+
+```{r}
+set.seed(123)
+n <- 30
+p <- 2
+tt <- 29 # test when there are only two clusters
+tau <- 0.05
+nsim <- 10
 pvals2 <- rep(NA, nsim)
 for (i in seq(nsim)) {
   x <- matrix(rnorm(n * p), n, p)
@@ -644,6 +710,15 @@ for (i in seq(nsim)) {
   pvals2[i] <- compute_pvalue_grid(tt, x, hc, dist_func = dist)
 }
 pvals2
+```
+```{r}
+qqplot(
+  (ppoints(length(pvals2))),
+  (sort(pvals2)),
+  xlab = "Expected",
+  ylab = "Observed"
+)
+abline(0, 1, col = "red")
 ```
 
 In principle, this should be identical to the p-values we got with the other approach.  Let's check how close they are:

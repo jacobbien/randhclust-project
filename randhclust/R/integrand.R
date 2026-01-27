@@ -27,10 +27,17 @@ integrand <- function(r, t, x, hc_sequence, obs_statistics, dist_func,
   n1 <- length(hc_sequence$clusts[[t]][[hc_sequence$merges[t, 1]]])
   n2 <- length(hc_sequence$clusts[[t]][[hc_sequence$merges[t, 2]]])
   
+  scaling = 1/n1+1/n2
   fr <- sqrt(r / (n1 + n2 - 2 + r))
-  x_new <- with(obs_statistics, # all variables other than fr come from list
-       sqrt(1+1/a) * fr * b + sqrt((1+a) * (1-fr^2)) * w + (x - b - w))
+  b = obs_statistics$b
+  w = obs_statistics$w
+  bnorm = Matrix::norm(b, "F")
+  wnorm = Matrix::norm(w, "F")
+  x_new = sqrt(bnorm^2/scaling + wnorm^2)*(fr * b/bnorm + sqrt(1-fr^2) * w/wnorm) + (x - b/sqrt(scaling) - w)
+  
+  
   probs <- compute_selected_probs(x_new, hc_sequence, dist_func, linkage_func, tau)
+  #print(probs)
 #  if (df(r, df1 = p, df2 = p * (n1 + n2 - 2)) * prod(probs) < 0) browser()
   return(df(r, df1 = p, df2 = p * (n1 + n2 - 2)) * prod(probs))
 }

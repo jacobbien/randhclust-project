@@ -12,7 +12,10 @@ get_merge_probs <- function(d, tau) {
   if (tau == 0)
     mat <- d == min(d[lower.tri(d, diag=FALSE)])
   else {
-    mat <- exp(-(d - max(d)) / tau)
+   # mat <- exp(-(d - max(d)) / tau)
+    d_lower <- d[lower.tri(d, diag = FALSE)]
+    tau_eff <- tau* mean(d_lower)
+   mat <- exp(-d / tau_eff)
   }
   mat[upper.tri(mat, diag=TRUE)] <- 0
   return(mat / sum(mat))

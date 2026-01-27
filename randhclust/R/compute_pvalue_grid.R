@@ -27,7 +27,7 @@ compute_pvalue_grid <- function(t, x, hc, hc_sequence = NULL, obs_statistics = N
     f = integrand_func,
     wide_grid_min = 0.00001,
     wide_grid_max = 180,
-    num_coarse = 1000,
+    num_coarse = 20,
     num_fine = 2000,
     buffer = 3
     )

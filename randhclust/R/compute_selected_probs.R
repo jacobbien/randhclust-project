@@ -21,13 +21,13 @@ compute_selected_probs <- function(x_new, hc_sequence, dist_func, linkage_func, 
   d <- as.matrix(dist_func(x_new))
   d_clusts <- d
   for (i in seq(num_steps)) {
+    #print(d_clusts)
     # calculate probabilities
     probs <- get_merge_probs(d_clusts, tau)
-    
+   
     # get the chosen two clusters from the current clustering
     c1 <- hc_sequence$merges[i, 1]
     c2 <- hc_sequence$merges[i, 2]
-    
     # record probability for chosen pair
     probs_selected[i] <- probs[c1, c2] + probs[c2, c1] # matrix is lower tri
     if (i == num_steps) break
@@ -48,5 +48,6 @@ compute_selected_probs <- function(x_new, hc_sequence, dist_func, linkage_func, 
     d_clusts <- rbind(d_new, d_clusts)
     d_clusts <- cbind(c(0, d_new), d_clusts)
   }
+  
   return(probs_selected)
 }
