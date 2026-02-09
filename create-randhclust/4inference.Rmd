@@ -23,7 +23,7 @@ $$
 where $b,w\in\mathbb R^{n\times p}$ have row $i$ given by
 
 $$
-b_i=\frac{\bar X_{C_1}-\bar X_{C_2}}{\sqrt{1/|C_1|+1/|C_2|}}\cdot\begin{cases}1/|C_1|\text{ for }i\in C_1\\
+b_i=\frac{\bar X_{C_1}-\bar X_{C_2}}{1/|C_1|+1/|C_2|}\cdot\begin{cases}1/|C_1|\text{ for }i\in C_1\\
 -1/|C_2|\text{ for }i\in C_2\\0\text{ otherwise}\end{cases}
 $$
 and
@@ -36,7 +36,7 @@ $$
 We also note that
 
 $$
-\|b\|^2=\frac{\|\bar X_{C_1}-\bar X_{C_2}\|^2}{1/|C_1|+1/|C_2|}\cdot\left(|C_1|(1/|C_1|)^2+|C_2|(1/|C_2|^2)\right)=\|\bar X_{C_1}-\bar X_{C_2}\|^2
+\|b\|^2=\frac{\|\bar X_{C_1}-\bar X_{C_2}\|^2}{(1/|C_1|+1/|C_2|)^2}\cdot\left(|C_1|(1/|C_1|)^2+|C_2|(1/|C_2|^2)\right)=\frac{\|\bar X_{C_1}-\bar X_{C_2}\|^2}{1/|C_1|+1/|C_2|}
 $$
 
 In addition to computing the observed test statistic, we will also compute several "auxiliary statistics," whose observed values also depend on the matrices $b$ and $w$.
@@ -83,8 +83,8 @@ compute_observed_statistics <- function(x, clust1, clust2) {
   xx2 <- scale(x[clust2, , drop = FALSE], center = TRUE, scale = FALSE)
   xbar_diff <- attr(xx1, "scaled:center") - attr(xx2, "scaled:center")
 
-  between <- sum(xbar_diff^2)
-  within <- sum(xx1^2) + sum(xx2^2)
+  # between <- sum(xbar_diff^2)
+  # within <- sum(xx1^2) + sum(xx2^2)
   
   # compute w and b as sparse matrices
   w <- b <- Matrix::Matrix(0, nrow = nrow(x), ncol = p)
@@ -93,11 +93,10 @@ compute_observed_statistics <- function(x, clust1, clust2) {
 
   b[clust1, ] <- 1/n1 * matrix(xbar_diff, nrow = n1, ncol = p, byrow = TRUE)
   b[clust2, ] <- -1/n2 * matrix(xbar_diff, nrow = n2, ncol = p, byrow = TRUE)
-  b <- b / sqrt(scaling)
+  b <- b / scaling # scaling = || nu ||^2
   
-  a <- between / within
-  ratio <- (n1 + n2 - 2) / scaling * a
-  #ratio <- (n1 + n2 - 2) * a
+  a <- sum(b^2) / sum(w^2)
+  ratio <- (n1 + n2 - 2) * a
   list(ratio = ratio, b = b, w = w, a = a)
 }
 ```
@@ -116,11 +115,11 @@ testthat::test_that("compute_observed_statistics() works", {
   clust1 <- 1:2
   clust2 <- 3
   # working directly from the formula in the paper:
-  scaling = 1/2 +1/1
+  scaling = 1/2 + 1/1
   bcss <- 2 * 1 / 3 * (0-6)^2
   wcss <- 1 + 1 + 0
   out <- compute_observed_statistics(x, clust1, clust2)
-  testthat::expect_equal(out$ratio, (3 - 2)* bcss / wcss)
+  testthat::expect_equal(out$ratio, (3 - 2) * bcss / wcss)
   testthat::expect_equal(out$a, sum(out$b^2) / sum(out$w^2))
   
   # and a two-dimensional example with four points:
@@ -129,12 +128,12 @@ testthat::test_that("compute_observed_statistics() works", {
               ncol = 2)
   clust1 <- 1:2
   clust2 <- 3:4
-  scaling = 1/2 +1/2
+  scaling = 1/2 + 1/2
   # working directly from the formula in the paper:
   bcss <- 2 * 2 / 4 * sum(c(6, 2)^2)
   wcss <- 1 + 1 + 0 + 0
   out <- compute_observed_statistics(x, clust1, clust2)
-  testthat::expect_equal(out$ratio, (4 - 2)* bcss / wcss)
+  testthat::expect_equal(out$ratio, (4 - 2) * bcss / wcss)
   testthat::expect_equal(out$a, sum(out$b^2) / sum(out$w^2))
 })
 ```
@@ -243,7 +242,6 @@ compute_selected_probs <- function(x_new, hc_sequence, dist_func, linkage_func, 
   d <- as.matrix(dist_func(x_new))
   d_clusts <- d
   for (i in seq(num_steps)) {
-    #print(d_clusts)
     # calculate probabilities
     probs <- get_merge_probs(d_clusts, tau)
    
@@ -347,16 +345,10 @@ integrand <- function(r, t, x, hc_sequence, obs_statistics, dist_func,
   
   scaling = 1/n1+1/n2
   fr <- sqrt(r / (n1 + n2 - 2 + r))
-  b = obs_statistics$b
-  w = obs_statistics$w
-  bnorm = Matrix::norm(b, "F")
-  wnorm = Matrix::norm(w, "F")
-  x_new = sqrt(bnorm^2/scaling + wnorm^2)*(fr * b/bnorm + sqrt(1-fr^2) * w/wnorm) + (x - b/sqrt(scaling) - w)
-  
-  
+  x_new <- with(obs_statistics, # all variables other than fr come from list
+                sqrt(1+1/a) * fr * b + sqrt((1+a) * (1-fr^2)) * w + (x - b - w))
+
   probs <- compute_selected_probs(x_new, hc_sequence, dist_func, linkage_func, tau)
-  #print(probs)
-#  if (df(r, df1 = p, df2 = p * (n1 + n2 - 2)) * prod(probs) < 0) browser()
   return(df(r, df1 = p, df2 = p * (n1 + n2 - 2)) * prod(probs))
 }
 ```
@@ -421,25 +413,7 @@ compute_pvalue <- function(t, x, hc, hc_sequence = NULL, obs_statistics = NULL, 
     clust2 <- hc_sequence$clusts[[t]][[hc_sequence$merges[t, 2]]]
     obs_statistics <- compute_observed_statistics(x, clust1, clust2)
   }
-  
-  
-  
-#====verify decomposition========
-#    n1 <- length(hc_sequence$clusts[[t]][[hc_sequence$merges[t, 1]]])
-  #   n2 <- length(hc_sequence$clusts[[t]][[hc_sequence$merges[t, 2]]])
-  #   scaling = 1/n1+1/n2
-  #   
-  #   b = obs_statistics$b
-  #   w = obs_statistics$w
-  #   bnorm = Matrix::norm(b, "F")
-  #   wnorm = Matrix::norm(w, "F")
-  #   ratio = obs_statistics$ratio
-  #   fr <- sqrt(ratio / (n1 + n2 - 2 + ratio))
-  # 
-  #   x_check <- sqrt(bnorm^2/scaling + wnorm^2)*(fr * b/bnorm + sqrt(1-fr^2) * w/wnorm) +   (x -b/sqrt(scaling) - w)
-  # print(max(abs(x_check - x)) < 1e-8)
-# =================================
-  
+
   integrand_func <- Vectorize(function(r) {
     integrand(r=r,
               t=t,
@@ -451,14 +425,8 @@ compute_pvalue <- function(t, x, hc, hc_sequence = NULL, obs_statistics = NULL, 
               tau = hc$tau)
   })
   # rather than 1 - I(r)/I(infty), let's try 1 / [1 + I(r) / I(r to inf)]
-   #numerator <- stats::integrate(integrand_func, 0, obs_statistics$ratio)
-   #denominator <- stats::integrate(integrand_func, 0, Inf)
-   #numerator <- integrate(integrand_func, 0, obs_statistics$ratio, rel.tol=1e-8)
-  #denominator <- integrate(integrand_func, 0, Inf, rel.tol=1e-8, subdivisions=2000)
   numerator <- stats::integrate(integrand_func, 0, obs_statistics$ratio)
   extra <- stats::integrate(integrand_func, obs_statistics$ratio, Inf)
-  #return(1 - numerator$value / denominator$value)
-  
   return(1 - 1 / (1 + extra$value / numerator$value))
 }
 ```
@@ -504,11 +472,11 @@ qqplot(
 abline(0, 1, col = "red")
 ```
 
+Looks good.
 
-Hmm, apparently not!
+#### An alternative grid-based approach
 
-
-Let's try Judy's adaptive grid-based summation approach:
+Let's try out the adaptive grid-based summation approach that is used in the Python implementation:
 
 Suppose we have a pdf $f$ that we want to integrate, but we don't know where its support is concentrated and its costly to evaluate.  Our approach is the following:
 
@@ -669,7 +637,7 @@ compute_pvalue_grid <- function(t, x, hc, hc_sequence = NULL, obs_statistics = N
     f = integrand_func,
     wide_grid_min = 0.00001,
     wide_grid_max = 180,
-    num_coarse = 20,
+    num_coarse = 200, # making this larger improves approximation, but at cost to time
     num_fine = 2000,
     buffer = 3
     )
@@ -682,41 +650,46 @@ compute_pvalue_grid <- function(t, x, hc, hc_sequence = NULL, obs_statistics = N
 Let's see if the p-values have a uniform distribution under the global null:
 
 ```{r}
-set.seed(123)
 n <- 30
 p <- 2
 tt <- 29 # test when there are only two clusters
 tau <- 0.05
-nsim <- 10
+nsim <- 5
+
+# run compute_pvalue() 
+set.seed(123)
 pvals <- rep(NA, nsim)
+
+time1 <- system.time({
 for (i in seq(nsim)) {
   x <- matrix(rnorm(n * p), n, p)
   hc <- hclust_randomized(dist(x), tau = tau)
   pvals[i] <- compute_pvalue(tt, x, hc, dist_func = dist)
 }
-```
+})
 
-```{r}
+# run compute_pvalue_grid() on identical data sets 
 set.seed(123)
-n <- 30
-p <- 2
-tt <- 29 # test when there are only two clusters
-tau <- 0.05
-nsim <- 10
 pvals2 <- rep(NA, nsim)
+time2 <- system.time({
 for (i in seq(nsim)) {
   x <- matrix(rnorm(n * p), n, p)
   hc <- hclust_randomized(dist(x), tau = tau)
   pvals2[i] <- compute_pvalue_grid(tt, x, hc, dist_func = dist)
 }
+})
+
 pvals2
 ```
+
+
 ```{r}
 qqplot(
   (ppoints(length(pvals2))),
   (sort(pvals2)),
   xlab = "Expected",
-  ylab = "Observed"
+  ylab = "Observed",
+  main = "Grid-based"
 )
 abline(0, 1, col = "red")
 ```
@@ -725,8 +698,10 @@ In principle, this should be identical to the p-values we got with the other app
 
 ```{r}
 range(pvals-pvals2)
+time1
+time2
 ```
 
+This shows that we can get nearly the identical p-values, but that the grid-based approach may be substantially slower.  Note: We can speed up the grid-based approach by taking `num_coarse` to be smaller; however, then the approximation suffers.
 
-
-
+For this reason, we will (for now) export `compute_pvalue()` and not the grid-based approach.

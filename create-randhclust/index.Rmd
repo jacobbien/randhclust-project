@@ -1,6 +1,6 @@
 ---
 title: "Creating the ``r params$package_name`` R package"
-author: "Jacob Bien"
+author: "Di Wu, Jacob Bien, Snigdha Panigrahi"
 date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
 knit: litr::render
