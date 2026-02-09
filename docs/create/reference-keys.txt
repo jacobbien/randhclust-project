@@ -15,4 +15,5 @@ computing-statistics
 conditionally-valid-p-value
 forming-integrand
 computing-p-value
+an-alternative-grid-based-approach
 conclude

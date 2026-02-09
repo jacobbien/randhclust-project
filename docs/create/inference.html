@@ -6,13 +6,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <title>5 Inference | Creating the randhclust R package</title>
 <meta name="description" content="5 Inference | Creating the randhclust R package">
-<meta name="generator" content="bookdown 0.46 and GitBook 2.6.7">
+<meta name="generator" content="bookdown 0.45 and GitBook 2.6.7">
 <meta property="og:title" content="5 Inference | Creating the randhclust R package">
 <meta property="og:type" content="book">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="5 Inference | Creating the randhclust R package">
-<meta name="author" content="Jacob Bien">
-<meta name="date" content="2026-01-27">
+<meta name="author" content="Di Wu, Jacob Bien, Snigdha Panigrahi">
+<meta name="date" content="2026-02-09">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -28,9 +28,8 @@
 <link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet">
 <link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet">
 <script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script><style type="text/css">
-html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span { line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -40,7 +39,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -182,7 +181,7 @@ R=(|C_1|+|C_2|-2)\cdot\frac{\|b\|^2}{\|w\|^2}
 \]</span>
 where <span class="math inline">\(b,w\in\mathbb R^{n\times p}\)</span> have row <span class="math inline">\(i\)</span> given by</p>
 <p><span class="math display">\[
-b_i=\frac{\bar X_{C_1}-\bar X_{C_2}}{\sqrt{1/|C_1|+1/|C_2|}}\cdot\begin{cases}1/|C_1|\text{ for }i\in C_1\\
+b_i=\frac{\bar X_{C_1}-\bar X_{C_2}}{1/|C_1|+1/|C_2|}\cdot\begin{cases}1/|C_1|\text{ for }i\in C_1\\
 -1/|C_2|\text{ for }i\in C_2\\0\text{ otherwise}\end{cases}
 \]</span>
 and
@@ -194,7 +193,7 @@ X_i-\bar X_{C_2}\text{ for }i\in C_2\\
 \]</span>
 We also note that</p>
 <p><span class="math display">\[
-\|b\|^2=\frac{\|\bar X_{C_1}-\bar X_{C_2}\|^2}{1/|C_1|+1/|C_2|}\cdot\left(|C_1|(1/|C_1|)^2+|C_2|(1/|C_2|^2)\right)=\|\bar X_{C_1}-\bar X_{C_2}\|^2
+\|b\|^2=\frac{\|\bar X_{C_1}-\bar X_{C_2}\|^2}{(1/|C_1|+1/|C_2|)^2}\cdot\left(|C_1|(1/|C_1|)^2+|C_2|(1/|C_2|^2)\right)=\frac{\|\bar X_{C_1}-\bar X_{C_2}\|^2}{1/|C_1|+1/|C_2|}
 \]</span></p>
 <p>In addition to computing the observed test statistic, we will also compute several “auxiliary statistics,” whose observed values also depend on the matrices <span class="math inline">\(b\)</span> and <span class="math inline">\(w\)</span>.</p>
 <p>In particular, we will later need the matrix-valued function</p>
@@ -232,8 +231,8 @@ X(r';\mathcal A_o^{(t)})=\sqrt{1+1/a} \cdot g(r')\cdot b+\sqrt{1+a}\cdot\sqrt{1-
 <span id="cb40-23"><a href="inference.html#cb40-23" tabindex="-1"></a>  xx2 <span class="ot">&lt;-</span> <span class="fu">scale</span>(x[clust2, , <span class="at">drop =</span> <span class="cn">FALSE</span>], <span class="at">center =</span> <span class="cn">TRUE</span>, <span class="at">scale =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb40-24"><a href="inference.html#cb40-24" tabindex="-1"></a>  xbar_diff <span class="ot">&lt;-</span> <span class="fu">attr</span>(xx1, <span class="st">"scaled:center"</span>) <span class="sc">-</span> <span class="fu">attr</span>(xx2, <span class="st">"scaled:center"</span>)</span>
 <span id="cb40-25"><a href="inference.html#cb40-25" tabindex="-1"></a></span>
-<span id="cb40-26"><a href="inference.html#cb40-26" tabindex="-1"></a>  between <span class="ot">&lt;-</span> <span class="fu">sum</span>(xbar_diff<span class="sc">^</span><span class="dv">2</span>)</span>
-<span id="cb40-27"><a href="inference.html#cb40-27" tabindex="-1"></a>  within <span class="ot">&lt;-</span> <span class="fu">sum</span>(xx1<span class="sc">^</span><span class="dv">2</span>) <span class="sc">+</span> <span class="fu">sum</span>(xx2<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb40-26"><a href="inference.html#cb40-26" tabindex="-1"></a>  <span class="co"># between &lt;- sum(xbar_diff^2)</span></span>
+<span id="cb40-27"><a href="inference.html#cb40-27" tabindex="-1"></a>  <span class="co"># within &lt;- sum(xx1^2) + sum(xx2^2)</span></span>
 <span id="cb40-28"><a href="inference.html#cb40-28" tabindex="-1"></a>  </span>
 <span id="cb40-29"><a href="inference.html#cb40-29" tabindex="-1"></a>  <span class="co"># compute w and b as sparse matrices</span></span>
 <span id="cb40-30"><a href="inference.html#cb40-30" tabindex="-1"></a>  w <span class="ot">&lt;-</span> b <span class="ot">&lt;-</span> Matrix<span class="sc">::</span><span class="fu">Matrix</span>(<span class="dv">0</span>, <span class="at">nrow =</span> <span class="fu">nrow</span>(x), <span class="at">ncol =</span> p)</span>
@@ -242,13 +241,12 @@ X(r';\mathcal A_o^{(t)})=\sqrt{1+1/a} \cdot g(r')\cdot b+\sqrt{1+a}\cdot\sqrt{1-
 <span id="cb40-33"><a href="inference.html#cb40-33" tabindex="-1"></a></span>
 <span id="cb40-34"><a href="inference.html#cb40-34" tabindex="-1"></a>  b[clust1, ] <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>n1 <span class="sc">*</span> <span class="fu">matrix</span>(xbar_diff, <span class="at">nrow =</span> n1, <span class="at">ncol =</span> p, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb40-35"><a href="inference.html#cb40-35" tabindex="-1"></a>  b[clust2, ] <span class="ot">&lt;-</span> <span class="sc">-</span><span class="dv">1</span><span class="sc">/</span>n2 <span class="sc">*</span> <span class="fu">matrix</span>(xbar_diff, <span class="at">nrow =</span> n2, <span class="at">ncol =</span> p, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb40-36"><a href="inference.html#cb40-36" tabindex="-1"></a>  b <span class="ot">&lt;-</span> b <span class="sc">/</span> <span class="fu">sqrt</span>(scaling)</span>
+<span id="cb40-36"><a href="inference.html#cb40-36" tabindex="-1"></a>  b <span class="ot">&lt;-</span> b <span class="sc">/</span> scaling <span class="co"># scaling = || nu ||^2</span></span>
 <span id="cb40-37"><a href="inference.html#cb40-37" tabindex="-1"></a>  </span>
-<span id="cb40-38"><a href="inference.html#cb40-38" tabindex="-1"></a>  a <span class="ot">&lt;-</span> between <span class="sc">/</span> within</span>
-<span id="cb40-39"><a href="inference.html#cb40-39" tabindex="-1"></a>  ratio <span class="ot">&lt;-</span> (n1 <span class="sc">+</span> n2 <span class="sc">-</span> <span class="dv">2</span>) <span class="sc">/</span> scaling <span class="sc">*</span> a</span>
-<span id="cb40-40"><a href="inference.html#cb40-40" tabindex="-1"></a>  <span class="co">#ratio &lt;- (n1 + n2 - 2) * a</span></span>
-<span id="cb40-41"><a href="inference.html#cb40-41" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">ratio =</span> ratio, <span class="at">b =</span> b, <span class="at">w =</span> w, <span class="at">a =</span> a)</span>
-<span id="cb40-42"><a href="inference.html#cb40-42" tabindex="-1"></a>}</span></code></pre></div>
+<span id="cb40-38"><a href="inference.html#cb40-38" tabindex="-1"></a>  a <span class="ot">&lt;-</span> <span class="fu">sum</span>(b<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="fu">sum</span>(w<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb40-39"><a href="inference.html#cb40-39" tabindex="-1"></a>  ratio <span class="ot">&lt;-</span> (n1 <span class="sc">+</span> n2 <span class="sc">-</span> <span class="dv">2</span>) <span class="sc">*</span> a</span>
+<span id="cb40-40"><a href="inference.html#cb40-40" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">ratio =</span> ratio, <span class="at">b =</span> b, <span class="at">w =</span> w, <span class="at">a =</span> a)</span>
+<span id="cb40-41"><a href="inference.html#cb40-41" tabindex="-1"></a>}</span></code></pre></div>
 <div class="sourceCode" id="cb41"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb41-1"><a href="inference.html#cb41-1" tabindex="-1"></a>usethis<span class="sc">::</span><span class="fu">use_package</span>(<span class="st">"Matrix"</span>)</span></code></pre></div>
 <pre><code>## ✔ Adding Matrix to 'Imports' field in DESCRIPTION.</code></pre>
 <pre><code>## ☐ Refer to functions with `Matrix::fun()`.</code></pre>
@@ -259,11 +257,11 @@ X(r';\mathcal A_o^{(t)})=\sqrt{1+1/a} \cdot g(r')\cdot b+\sqrt{1+a}\cdot\sqrt{1-
 <span id="cb44-4"><a href="inference.html#cb44-4" tabindex="-1"></a>  clust1 <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span></span>
 <span id="cb44-5"><a href="inference.html#cb44-5" tabindex="-1"></a>  clust2 <span class="ot">&lt;-</span> <span class="dv">3</span></span>
 <span id="cb44-6"><a href="inference.html#cb44-6" tabindex="-1"></a>  <span class="co"># working directly from the formula in the paper:</span></span>
-<span id="cb44-7"><a href="inference.html#cb44-7" tabindex="-1"></a>  scaling <span class="ot">=</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">2</span> <span class="sc">+</span><span class="dv">1</span><span class="sc">/</span><span class="dv">1</span></span>
+<span id="cb44-7"><a href="inference.html#cb44-7" tabindex="-1"></a>  scaling <span class="ot">=</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">1</span></span>
 <span id="cb44-8"><a href="inference.html#cb44-8" tabindex="-1"></a>  bcss <span class="ot">&lt;-</span> <span class="dv">2</span> <span class="sc">*</span> <span class="dv">1</span> <span class="sc">/</span> <span class="dv">3</span> <span class="sc">*</span> (<span class="dv">0-6</span>)<span class="sc">^</span><span class="dv">2</span></span>
 <span id="cb44-9"><a href="inference.html#cb44-9" tabindex="-1"></a>  wcss <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">+</span> <span class="dv">1</span> <span class="sc">+</span> <span class="dv">0</span></span>
 <span id="cb44-10"><a href="inference.html#cb44-10" tabindex="-1"></a>  out <span class="ot">&lt;-</span> <a href="inference.html#compute_observed_statistics">compute_observed_statistics</a>(x, clust1, clust2)</span>
-<span id="cb44-11"><a href="inference.html#cb44-11" tabindex="-1"></a>  testthat<span class="sc">::</span><span class="fu">expect_equal</span>(out<span class="sc">$</span>ratio, (<span class="dv">3</span> <span class="sc">-</span> <span class="dv">2</span>)<span class="sc">*</span> bcss <span class="sc">/</span> wcss)</span>
+<span id="cb44-11"><a href="inference.html#cb44-11" tabindex="-1"></a>  testthat<span class="sc">::</span><span class="fu">expect_equal</span>(out<span class="sc">$</span>ratio, (<span class="dv">3</span> <span class="sc">-</span> <span class="dv">2</span>) <span class="sc">*</span> bcss <span class="sc">/</span> wcss)</span>
 <span id="cb44-12"><a href="inference.html#cb44-12" tabindex="-1"></a>  testthat<span class="sc">::</span><span class="fu">expect_equal</span>(out<span class="sc">$</span>a, <span class="fu">sum</span>(out<span class="sc">$</span>b<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="fu">sum</span>(out<span class="sc">$</span>w<span class="sc">^</span><span class="dv">2</span>))</span>
 <span id="cb44-13"><a href="inference.html#cb44-13" tabindex="-1"></a>  </span>
 <span id="cb44-14"><a href="inference.html#cb44-14" tabindex="-1"></a>  <span class="co"># and a two-dimensional example with four points:</span></span>
@@ -272,15 +270,15 @@ X(r';\mathcal A_o^{(t)})=\sqrt{1+1/a} \cdot g(r')\cdot b+\sqrt{1+a}\cdot\sqrt{1-
 <span id="cb44-17"><a href="inference.html#cb44-17" tabindex="-1"></a>              <span class="at">ncol =</span> <span class="dv">2</span>)</span>
 <span id="cb44-18"><a href="inference.html#cb44-18" tabindex="-1"></a>  clust1 <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">2</span></span>
 <span id="cb44-19"><a href="inference.html#cb44-19" tabindex="-1"></a>  clust2 <span class="ot">&lt;-</span> <span class="dv">3</span><span class="sc">:</span><span class="dv">4</span></span>
-<span id="cb44-20"><a href="inference.html#cb44-20" tabindex="-1"></a>  scaling <span class="ot">=</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">2</span> <span class="sc">+</span><span class="dv">1</span><span class="sc">/</span><span class="dv">2</span></span>
+<span id="cb44-20"><a href="inference.html#cb44-20" tabindex="-1"></a>  scaling <span class="ot">=</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">1</span><span class="sc">/</span><span class="dv">2</span></span>
 <span id="cb44-21"><a href="inference.html#cb44-21" tabindex="-1"></a>  <span class="co"># working directly from the formula in the paper:</span></span>
 <span id="cb44-22"><a href="inference.html#cb44-22" tabindex="-1"></a>  bcss <span class="ot">&lt;-</span> <span class="dv">2</span> <span class="sc">*</span> <span class="dv">2</span> <span class="sc">/</span> <span class="dv">4</span> <span class="sc">*</span> <span class="fu">sum</span>(<span class="fu">c</span>(<span class="dv">6</span>, <span class="dv">2</span>)<span class="sc">^</span><span class="dv">2</span>)</span>
 <span id="cb44-23"><a href="inference.html#cb44-23" tabindex="-1"></a>  wcss <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">+</span> <span class="dv">1</span> <span class="sc">+</span> <span class="dv">0</span> <span class="sc">+</span> <span class="dv">0</span></span>
 <span id="cb44-24"><a href="inference.html#cb44-24" tabindex="-1"></a>  out <span class="ot">&lt;-</span> <a href="inference.html#compute_observed_statistics">compute_observed_statistics</a>(x, clust1, clust2)</span>
-<span id="cb44-25"><a href="inference.html#cb44-25" tabindex="-1"></a>  testthat<span class="sc">::</span><span class="fu">expect_equal</span>(out<span class="sc">$</span>ratio, (<span class="dv">4</span> <span class="sc">-</span> <span class="dv">2</span>)<span class="sc">*</span> bcss <span class="sc">/</span> wcss)</span>
+<span id="cb44-25"><a href="inference.html#cb44-25" tabindex="-1"></a>  testthat<span class="sc">::</span><span class="fu">expect_equal</span>(out<span class="sc">$</span>ratio, (<span class="dv">4</span> <span class="sc">-</span> <span class="dv">2</span>) <span class="sc">*</span> bcss <span class="sc">/</span> wcss)</span>
 <span id="cb44-26"><a href="inference.html#cb44-26" tabindex="-1"></a>  testthat<span class="sc">::</span><span class="fu">expect_equal</span>(out<span class="sc">$</span>a, <span class="fu">sum</span>(out<span class="sc">$</span>b<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="fu">sum</span>(out<span class="sc">$</span>w<span class="sc">^</span><span class="dv">2</span>))</span>
 <span id="cb44-27"><a href="inference.html#cb44-27" tabindex="-1"></a>})</span></code></pre></div>
-<pre><code>## Test passed 🎊</code></pre>
+<pre><code>## Test passed with 4 successes 🎊.</code></pre>
 </div>
 <div id="conditionally-valid-p-value" class="section level2 hasAnchor" number="5.2">
 <h2>
@@ -349,7 +347,7 @@ X(r';\mathcal A_o^{(t)})=\sqrt{1+1/a} \cdot g(r')\cdot b+\sqrt{1+a}\cdot\sqrt{1-
 <span id="cb47-19"><a href="inference.html#cb47-19" tabindex="-1"></a>    testthat<span class="sc">::</span><span class="fu">expect_equal</span>(out<span class="sc">$</span>clusts[[i <span class="sc">+</span> <span class="dv">1</span>]][[<span class="dv">1</span>]], <span class="fu">sort</span>(<span class="fu">c</span>(clust1, clust2)))</span>
 <span id="cb47-20"><a href="inference.html#cb47-20" tabindex="-1"></a>  }</span>
 <span id="cb47-21"><a href="inference.html#cb47-21" tabindex="-1"></a>})</span></code></pre></div>
-<pre><code>## Test passed 🎊</code></pre>
+<pre><code>## Test passed with 10 successes 🎊.</code></pre>
 <div id="forming-integrand" class="section level3 hasAnchor" number="5.2.1">
 <h3>
 <span class="header-section-number">5.2.1</span> Forming integrand<a href="inference.html#forming-integrand" class="anchor-section" aria-label="Anchor link to header"></a>
@@ -376,36 +374,35 @@ X(r';\mathcal A_o^{(t)})=\sqrt{1+1/a} \cdot g(r')\cdot b+\sqrt{1+a}\cdot\sqrt{1-
 <span id="cb49-19"><a href="inference.html#cb49-19" tabindex="-1"></a>  d <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(<span class="fu">dist_func</span>(x_new))</span>
 <span id="cb49-20"><a href="inference.html#cb49-20" tabindex="-1"></a>  d_clusts <span class="ot">&lt;-</span> d</span>
 <span id="cb49-21"><a href="inference.html#cb49-21" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq</span>(num_steps)) {</span>
-<span id="cb49-22"><a href="inference.html#cb49-22" tabindex="-1"></a>    <span class="co">#print(d_clusts)</span></span>
-<span id="cb49-23"><a href="inference.html#cb49-23" tabindex="-1"></a>    <span class="co"># calculate probabilities</span></span>
-<span id="cb49-24"><a href="inference.html#cb49-24" tabindex="-1"></a>    probs <span class="ot">&lt;-</span> <a href="randomized-hierarchical-clustering.html#get_merge_probs">get_merge_probs</a>(d_clusts, tau)</span>
-<span id="cb49-25"><a href="inference.html#cb49-25" tabindex="-1"></a>   </span>
-<span id="cb49-26"><a href="inference.html#cb49-26" tabindex="-1"></a>    <span class="co"># get the chosen two clusters from the current clustering</span></span>
-<span id="cb49-27"><a href="inference.html#cb49-27" tabindex="-1"></a>    c1 <span class="ot">&lt;-</span> hc_sequence<span class="sc">$</span>merges[i, <span class="dv">1</span>]</span>
-<span id="cb49-28"><a href="inference.html#cb49-28" tabindex="-1"></a>    c2 <span class="ot">&lt;-</span> hc_sequence<span class="sc">$</span>merges[i, <span class="dv">2</span>]</span>
-<span id="cb49-29"><a href="inference.html#cb49-29" tabindex="-1"></a>    <span class="co"># record probability for chosen pair</span></span>
-<span id="cb49-30"><a href="inference.html#cb49-30" tabindex="-1"></a>    probs_selected[i] <span class="ot">&lt;-</span> probs[c1, c2] <span class="sc">+</span> probs[c2, c1] <span class="co"># matrix is lower tri</span></span>
-<span id="cb49-31"><a href="inference.html#cb49-31" tabindex="-1"></a>    <span class="cf">if</span> (i <span class="sc">==</span> num_steps) <span class="cf">break</span></span>
-<span id="cb49-32"><a href="inference.html#cb49-32" tabindex="-1"></a></span>
-<span id="cb49-33"><a href="inference.html#cb49-33" tabindex="-1"></a>    <span class="co"># update dissimilarities</span></span>
-<span id="cb49-34"><a href="inference.html#cb49-34" tabindex="-1"></a>    d_clusts <span class="ot">&lt;-</span> d_clusts[<span class="sc">-</span><span class="fu">c</span>(c1, c2), <span class="sc">-</span><span class="fu">c</span>(c1, c2), drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
-<span id="cb49-35"><a href="inference.html#cb49-35" tabindex="-1"></a>    num_clusts <span class="ot">&lt;-</span> <span class="fu">length</span>(hc_sequence<span class="sc">$</span>clusts[[i]])</span>
-<span id="cb49-36"><a href="inference.html#cb49-36" tabindex="-1"></a>    d_new <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
-<span id="cb49-37"><a href="inference.html#cb49-37" tabindex="-1"></a>    <span class="cf">for</span> (j <span class="cf">in</span> <span class="fu">seq</span>(num_clusts)[<span class="sc">-</span><span class="fu">c</span>(c1, c2)]) {</span>
-<span id="cb49-38"><a href="inference.html#cb49-38" tabindex="-1"></a>      d_new <span class="ot">&lt;-</span> <span class="fu">c</span>(d_new, <span class="fu">linkage_func</span>(</span>
-<span id="cb49-39"><a href="inference.html#cb49-39" tabindex="-1"></a>        hc_sequence<span class="sc">$</span>clusts[[i <span class="sc">+</span> <span class="dv">1</span>]][[<span class="dv">1</span>]], <span class="co"># newly created cluster</span></span>
-<span id="cb49-40"><a href="inference.html#cb49-40" tabindex="-1"></a>        hc_sequence<span class="sc">$</span>clusts[[i]][[j]], <span class="co"># remaining clusters</span></span>
-<span id="cb49-41"><a href="inference.html#cb49-41" tabindex="-1"></a>        d</span>
-<span id="cb49-42"><a href="inference.html#cb49-42" tabindex="-1"></a>      ))</span>
-<span id="cb49-43"><a href="inference.html#cb49-43" tabindex="-1"></a>    }</span>
-<span id="cb49-44"><a href="inference.html#cb49-44" tabindex="-1"></a></span>
-<span id="cb49-45"><a href="inference.html#cb49-45" tabindex="-1"></a>    <span class="co"># recall that new cluster will be first, i.e. clusts[[i+1]][[1]]:</span></span>
-<span id="cb49-46"><a href="inference.html#cb49-46" tabindex="-1"></a>    d_clusts <span class="ot">&lt;-</span> <span class="fu">rbind</span>(d_new, d_clusts)</span>
-<span id="cb49-47"><a href="inference.html#cb49-47" tabindex="-1"></a>    d_clusts <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">c</span>(<span class="dv">0</span>, d_new), d_clusts)</span>
-<span id="cb49-48"><a href="inference.html#cb49-48" tabindex="-1"></a>  }</span>
-<span id="cb49-49"><a href="inference.html#cb49-49" tabindex="-1"></a>  </span>
-<span id="cb49-50"><a href="inference.html#cb49-50" tabindex="-1"></a>  <span class="fu">return</span>(probs_selected)</span>
-<span id="cb49-51"><a href="inference.html#cb49-51" tabindex="-1"></a>}</span></code></pre></div>
+<span id="cb49-22"><a href="inference.html#cb49-22" tabindex="-1"></a>    <span class="co"># calculate probabilities</span></span>
+<span id="cb49-23"><a href="inference.html#cb49-23" tabindex="-1"></a>    probs <span class="ot">&lt;-</span> <a href="randomized-hierarchical-clustering.html#get_merge_probs">get_merge_probs</a>(d_clusts, tau)</span>
+<span id="cb49-24"><a href="inference.html#cb49-24" tabindex="-1"></a>   </span>
+<span id="cb49-25"><a href="inference.html#cb49-25" tabindex="-1"></a>    <span class="co"># get the chosen two clusters from the current clustering</span></span>
+<span id="cb49-26"><a href="inference.html#cb49-26" tabindex="-1"></a>    c1 <span class="ot">&lt;-</span> hc_sequence<span class="sc">$</span>merges[i, <span class="dv">1</span>]</span>
+<span id="cb49-27"><a href="inference.html#cb49-27" tabindex="-1"></a>    c2 <span class="ot">&lt;-</span> hc_sequence<span class="sc">$</span>merges[i, <span class="dv">2</span>]</span>
+<span id="cb49-28"><a href="inference.html#cb49-28" tabindex="-1"></a>    <span class="co"># record probability for chosen pair</span></span>
+<span id="cb49-29"><a href="inference.html#cb49-29" tabindex="-1"></a>    probs_selected[i] <span class="ot">&lt;-</span> probs[c1, c2] <span class="sc">+</span> probs[c2, c1] <span class="co"># matrix is lower tri</span></span>
+<span id="cb49-30"><a href="inference.html#cb49-30" tabindex="-1"></a>    <span class="cf">if</span> (i <span class="sc">==</span> num_steps) <span class="cf">break</span></span>
+<span id="cb49-31"><a href="inference.html#cb49-31" tabindex="-1"></a></span>
+<span id="cb49-32"><a href="inference.html#cb49-32" tabindex="-1"></a>    <span class="co"># update dissimilarities</span></span>
+<span id="cb49-33"><a href="inference.html#cb49-33" tabindex="-1"></a>    d_clusts <span class="ot">&lt;-</span> d_clusts[<span class="sc">-</span><span class="fu">c</span>(c1, c2), <span class="sc">-</span><span class="fu">c</span>(c1, c2), drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb49-34"><a href="inference.html#cb49-34" tabindex="-1"></a>    num_clusts <span class="ot">&lt;-</span> <span class="fu">length</span>(hc_sequence<span class="sc">$</span>clusts[[i]])</span>
+<span id="cb49-35"><a href="inference.html#cb49-35" tabindex="-1"></a>    d_new <span class="ot">&lt;-</span> <span class="fu">c</span>()</span>
+<span id="cb49-36"><a href="inference.html#cb49-36" tabindex="-1"></a>    <span class="cf">for</span> (j <span class="cf">in</span> <span class="fu">seq</span>(num_clusts)[<span class="sc">-</span><span class="fu">c</span>(c1, c2)]) {</span>
+<span id="cb49-37"><a href="inference.html#cb49-37" tabindex="-1"></a>      d_new <span class="ot">&lt;-</span> <span class="fu">c</span>(d_new, <span class="fu">linkage_func</span>(</span>
+<span id="cb49-38"><a href="inference.html#cb49-38" tabindex="-1"></a>        hc_sequence<span class="sc">$</span>clusts[[i <span class="sc">+</span> <span class="dv">1</span>]][[<span class="dv">1</span>]], <span class="co"># newly created cluster</span></span>
+<span id="cb49-39"><a href="inference.html#cb49-39" tabindex="-1"></a>        hc_sequence<span class="sc">$</span>clusts[[i]][[j]], <span class="co"># remaining clusters</span></span>
+<span id="cb49-40"><a href="inference.html#cb49-40" tabindex="-1"></a>        d</span>
+<span id="cb49-41"><a href="inference.html#cb49-41" tabindex="-1"></a>      ))</span>
+<span id="cb49-42"><a href="inference.html#cb49-42" tabindex="-1"></a>    }</span>
+<span id="cb49-43"><a href="inference.html#cb49-43" tabindex="-1"></a></span>
+<span id="cb49-44"><a href="inference.html#cb49-44" tabindex="-1"></a>    <span class="co"># recall that new cluster will be first, i.e. clusts[[i+1]][[1]]:</span></span>
+<span id="cb49-45"><a href="inference.html#cb49-45" tabindex="-1"></a>    d_clusts <span class="ot">&lt;-</span> <span class="fu">rbind</span>(d_new, d_clusts)</span>
+<span id="cb49-46"><a href="inference.html#cb49-46" tabindex="-1"></a>    d_clusts <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="fu">c</span>(<span class="dv">0</span>, d_new), d_clusts)</span>
+<span id="cb49-47"><a href="inference.html#cb49-47" tabindex="-1"></a>  }</span>
+<span id="cb49-48"><a href="inference.html#cb49-48" tabindex="-1"></a>  </span>
+<span id="cb49-49"><a href="inference.html#cb49-49" tabindex="-1"></a>  <span class="fu">return</span>(probs_selected)</span>
+<span id="cb49-50"><a href="inference.html#cb49-50" tabindex="-1"></a>}</span></code></pre></div>
 <p>Let’s make some tests based on the previous example:</p>
 <div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="inference.html#cb50-1" tabindex="-1"></a>testthat<span class="sc">::</span><span class="fu">test_that</span>(<span class="st">"<a href="inference.html#get_hclust_sequence">get_hclust_sequence</a>() works"</span>, {</span>
 <span id="cb50-2"><a href="inference.html#cb50-2" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>,     <span class="dv">10</span>, <span class="dv">14</span>,              <span class="dv">40</span>), <span class="at">ncol =</span> <span class="dv">1</span>)</span>
@@ -434,7 +431,7 @@ X(r';\mathcal A_o^{(t)})=\sqrt{1+1/a} \cdot g(r')\cdot b+\sqrt{1+a}\cdot\sqrt{1-
 <span id="cb50-25"><a href="inference.html#cb50-25" tabindex="-1"></a>      <span class="dv">1</span>, <span class="co"># merging {1,2}-{3,4} is best</span></span>
 <span id="cb50-26"><a href="inference.html#cb50-26" tabindex="-1"></a>      <span class="dv">1</span>))</span>
 <span id="cb50-27"><a href="inference.html#cb50-27" tabindex="-1"></a>})</span></code></pre></div>
-<pre><code>## Test passed 🥳</code></pre>
+<pre><code>## Test passed with 3 successes 🥳.</code></pre>
 <p>Recall that the integrand is given by</p>
 <p><span class="math display">\[
 \ell_{F}(r')\prod_{s=1}^tp^{(s)}\left(M_o^{(s)};X(r';\mathcal A_o^{(t)})\right).
@@ -469,18 +466,12 @@ X(r';\mathcal A_o^{(t)})=\sqrt{1+1/a} \cdot g(r')\cdot b+\sqrt{1+a}\cdot\sqrt{1-
 <span id="cb52-27"><a href="inference.html#cb52-27" tabindex="-1"></a>  </span>
 <span id="cb52-28"><a href="inference.html#cb52-28" tabindex="-1"></a>  scaling <span class="ot">=</span> <span class="dv">1</span><span class="sc">/</span>n1<span class="sc">+</span><span class="dv">1</span><span class="sc">/</span>n2</span>
 <span id="cb52-29"><a href="inference.html#cb52-29" tabindex="-1"></a>  fr <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(r <span class="sc">/</span> (n1 <span class="sc">+</span> n2 <span class="sc">-</span> <span class="dv">2</span> <span class="sc">+</span> r))</span>
-<span id="cb52-30"><a href="inference.html#cb52-30" tabindex="-1"></a>  b <span class="ot">=</span> obs_statistics<span class="sc">$</span>b</span>
-<span id="cb52-31"><a href="inference.html#cb52-31" tabindex="-1"></a>  w <span class="ot">=</span> obs_statistics<span class="sc">$</span>w</span>
-<span id="cb52-32"><a href="inference.html#cb52-32" tabindex="-1"></a>  bnorm <span class="ot">=</span> Matrix<span class="sc">::</span><span class="fu">norm</span>(b, <span class="st">"F"</span>)</span>
-<span id="cb52-33"><a href="inference.html#cb52-33" tabindex="-1"></a>  wnorm <span class="ot">=</span> Matrix<span class="sc">::</span><span class="fu">norm</span>(w, <span class="st">"F"</span>)</span>
-<span id="cb52-34"><a href="inference.html#cb52-34" tabindex="-1"></a>  x_new <span class="ot">=</span> <span class="fu">sqrt</span>(bnorm<span class="sc">^</span><span class="dv">2</span><span class="sc">/</span>scaling <span class="sc">+</span> wnorm<span class="sc">^</span><span class="dv">2</span>)<span class="sc">*</span>(fr <span class="sc">*</span> b<span class="sc">/</span>bnorm <span class="sc">+</span> <span class="fu">sqrt</span>(<span class="dv">1</span><span class="sc">-</span>fr<span class="sc">^</span><span class="dv">2</span>) <span class="sc">*</span> w<span class="sc">/</span>wnorm) <span class="sc">+</span> (x <span class="sc">-</span> b<span class="sc">/</span><span class="fu">sqrt</span>(scaling) <span class="sc">-</span> w)</span>
-<span id="cb52-35"><a href="inference.html#cb52-35" tabindex="-1"></a>  </span>
-<span id="cb52-36"><a href="inference.html#cb52-36" tabindex="-1"></a>  </span>
-<span id="cb52-37"><a href="inference.html#cb52-37" tabindex="-1"></a>  probs <span class="ot">&lt;-</span> <a href="inference.html#compute_selected_probs">compute_selected_probs</a>(x_new, hc_sequence, dist_func, linkage_func, tau)</span>
-<span id="cb52-38"><a href="inference.html#cb52-38" tabindex="-1"></a>  <span class="co">#print(probs)</span></span>
-<span id="cb52-39"><a href="inference.html#cb52-39" tabindex="-1"></a><span class="co">#  if (df(r, df1 = p, df2 = p * (n1 + n2 - 2)) * prod(probs) &lt; 0) browser()</span></span>
-<span id="cb52-40"><a href="inference.html#cb52-40" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">df</span>(r, <span class="at">df1 =</span> p, <span class="at">df2 =</span> p <span class="sc">*</span> (n1 <span class="sc">+</span> n2 <span class="sc">-</span> <span class="dv">2</span>)) <span class="sc">*</span> <span class="fu">prod</span>(probs))</span>
-<span id="cb52-41"><a href="inference.html#cb52-41" tabindex="-1"></a>}</span></code></pre></div>
+<span id="cb52-30"><a href="inference.html#cb52-30" tabindex="-1"></a>  x_new <span class="ot">&lt;-</span> <span class="fu">with</span>(obs_statistics, <span class="co"># all variables other than fr come from list</span></span>
+<span id="cb52-31"><a href="inference.html#cb52-31" tabindex="-1"></a>                <span class="fu">sqrt</span>(<span class="dv">1</span><span class="sc">+</span><span class="dv">1</span><span class="sc">/</span>a) <span class="sc">*</span> fr <span class="sc">*</span> b <span class="sc">+</span> <span class="fu">sqrt</span>((<span class="dv">1</span><span class="sc">+</span>a) <span class="sc">*</span> (<span class="dv">1</span><span class="sc">-</span>fr<span class="sc">^</span><span class="dv">2</span>)) <span class="sc">*</span> w <span class="sc">+</span> (x <span class="sc">-</span> b <span class="sc">-</span> w))</span>
+<span id="cb52-32"><a href="inference.html#cb52-32" tabindex="-1"></a></span>
+<span id="cb52-33"><a href="inference.html#cb52-33" tabindex="-1"></a>  probs <span class="ot">&lt;-</span> <a href="inference.html#compute_selected_probs">compute_selected_probs</a>(x_new, hc_sequence, dist_func, linkage_func, tau)</span>
+<span id="cb52-34"><a href="inference.html#cb52-34" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">df</span>(r, <span class="at">df1 =</span> p, <span class="at">df2 =</span> p <span class="sc">*</span> (n1 <span class="sc">+</span> n2 <span class="sc">-</span> <span class="dv">2</span>)) <span class="sc">*</span> <span class="fu">prod</span>(probs))</span>
+<span id="cb52-35"><a href="inference.html#cb52-35" tabindex="-1"></a>}</span></code></pre></div>
 <p>Let’s make a plot of the integrand:</p>
 <div class="sourceCode" id="cb53"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb53-1"><a href="inference.html#cb53-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> ex1<span class="sc">$</span>x</span>
 <span id="cb53-2"><a href="inference.html#cb53-2" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>,     <span class="dv">10</span>, <span class="dv">14</span>,              <span class="dv">40</span>), <span class="at">ncol =</span> <span class="dv">1</span>)</span>
@@ -536,46 +527,22 @@ X(r';\mathcal A_o^{(t)})=\sqrt{1+1/a} \cdot g(r')\cdot b+\sqrt{1+a}\cdot\sqrt{1-
 <span id="cb54-22"><a href="inference.html#cb54-22" tabindex="-1"></a>    clust2 <span class="ot">&lt;-</span> hc_sequence<span class="sc">$</span>clusts[[t]][[hc_sequence<span class="sc">$</span>merges[t, <span class="dv">2</span>]]]</span>
 <span id="cb54-23"><a href="inference.html#cb54-23" tabindex="-1"></a>    obs_statistics <span class="ot">&lt;-</span> <a href="inference.html#compute_observed_statistics">compute_observed_statistics</a>(x, clust1, clust2)</span>
 <span id="cb54-24"><a href="inference.html#cb54-24" tabindex="-1"></a>  }</span>
-<span id="cb54-25"><a href="inference.html#cb54-25" tabindex="-1"></a>  </span>
-<span id="cb54-26"><a href="inference.html#cb54-26" tabindex="-1"></a>  </span>
-<span id="cb54-27"><a href="inference.html#cb54-27" tabindex="-1"></a>  </span>
-<span id="cb54-28"><a href="inference.html#cb54-28" tabindex="-1"></a><span class="co">#====verify decomposition========</span></span>
-<span id="cb54-29"><a href="inference.html#cb54-29" tabindex="-1"></a><span class="co">#    n1 &lt;- length(hc_sequence$clusts[[t]][[hc_sequence$merges[t, 1]]])</span></span>
-<span id="cb54-30"><a href="inference.html#cb54-30" tabindex="-1"></a>  <span class="co">#   n2 &lt;- length(hc_sequence$clusts[[t]][[hc_sequence$merges[t, 2]]])</span></span>
-<span id="cb54-31"><a href="inference.html#cb54-31" tabindex="-1"></a>  <span class="co">#   scaling = 1/n1+1/n2</span></span>
-<span id="cb54-32"><a href="inference.html#cb54-32" tabindex="-1"></a>  <span class="co">#   </span></span>
-<span id="cb54-33"><a href="inference.html#cb54-33" tabindex="-1"></a>  <span class="co">#   b = obs_statistics$b</span></span>
-<span id="cb54-34"><a href="inference.html#cb54-34" tabindex="-1"></a>  <span class="co">#   w = obs_statistics$w</span></span>
-<span id="cb54-35"><a href="inference.html#cb54-35" tabindex="-1"></a>  <span class="co">#   bnorm = Matrix::norm(b, "F")</span></span>
-<span id="cb54-36"><a href="inference.html#cb54-36" tabindex="-1"></a>  <span class="co">#   wnorm = Matrix::norm(w, "F")</span></span>
-<span id="cb54-37"><a href="inference.html#cb54-37" tabindex="-1"></a>  <span class="co">#   ratio = obs_statistics$ratio</span></span>
-<span id="cb54-38"><a href="inference.html#cb54-38" tabindex="-1"></a>  <span class="co">#   fr &lt;- sqrt(ratio / (n1 + n2 - 2 + ratio))</span></span>
-<span id="cb54-39"><a href="inference.html#cb54-39" tabindex="-1"></a>  <span class="co"># </span></span>
-<span id="cb54-40"><a href="inference.html#cb54-40" tabindex="-1"></a>  <span class="co">#   x_check &lt;- sqrt(bnorm^2/scaling + wnorm^2)*(fr * b/bnorm + sqrt(1-fr^2) * w/wnorm) +   (x -b/sqrt(scaling) - w)</span></span>
-<span id="cb54-41"><a href="inference.html#cb54-41" tabindex="-1"></a>  <span class="co"># print(max(abs(x_check - x)) &lt; 1e-8)</span></span>
-<span id="cb54-42"><a href="inference.html#cb54-42" tabindex="-1"></a><span class="co"># =================================</span></span>
-<span id="cb54-43"><a href="inference.html#cb54-43" tabindex="-1"></a>  </span>
-<span id="cb54-44"><a href="inference.html#cb54-44" tabindex="-1"></a>  integrand_func <span class="ot">&lt;-</span> <span class="fu">Vectorize</span>(<span class="cf">function</span>(r) {</span>
-<span id="cb54-45"><a href="inference.html#cb54-45" tabindex="-1"></a>    <a href="inference.html#integrand">integrand</a>(<span class="at">r=</span>r,</span>
-<span id="cb54-46"><a href="inference.html#cb54-46" tabindex="-1"></a>              <span class="at">t=</span>t,</span>
-<span id="cb54-47"><a href="inference.html#cb54-47" tabindex="-1"></a>              <span class="at">x=</span>x,</span>
-<span id="cb54-48"><a href="inference.html#cb54-48" tabindex="-1"></a>              <span class="at">hc_sequence=</span>hc_sequence,</span>
-<span id="cb54-49"><a href="inference.html#cb54-49" tabindex="-1"></a>              <span class="at">obs_statistics=</span>obs_statistics,</span>
-<span id="cb54-50"><a href="inference.html#cb54-50" tabindex="-1"></a>              <span class="at">dist_func =</span> dist_func,</span>
-<span id="cb54-51"><a href="inference.html#cb54-51" tabindex="-1"></a>              <span class="at">linkage_func =</span> hc<span class="sc">$</span>linkage_func,</span>
-<span id="cb54-52"><a href="inference.html#cb54-52" tabindex="-1"></a>              <span class="at">tau =</span> hc<span class="sc">$</span>tau)</span>
-<span id="cb54-53"><a href="inference.html#cb54-53" tabindex="-1"></a>  })</span>
-<span id="cb54-54"><a href="inference.html#cb54-54" tabindex="-1"></a>  <span class="co"># rather than 1 - I(r)/I(infty), let's try 1 / [1 + I(r) / I(r to inf)]</span></span>
-<span id="cb54-55"><a href="inference.html#cb54-55" tabindex="-1"></a>   <span class="co">#numerator &lt;- stats::integrate(integrand_func, 0, obs_statistics$ratio)</span></span>
-<span id="cb54-56"><a href="inference.html#cb54-56" tabindex="-1"></a>   <span class="co">#denominator &lt;- stats::integrate(integrand_func, 0, Inf)</span></span>
-<span id="cb54-57"><a href="inference.html#cb54-57" tabindex="-1"></a>   <span class="co">#numerator &lt;- integrate(integrand_func, 0, obs_statistics$ratio, rel.tol=1e-8)</span></span>
-<span id="cb54-58"><a href="inference.html#cb54-58" tabindex="-1"></a>  <span class="co">#denominator &lt;- integrate(integrand_func, 0, Inf, rel.tol=1e-8, subdivisions=2000)</span></span>
-<span id="cb54-59"><a href="inference.html#cb54-59" tabindex="-1"></a>  numerator <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">integrate</span>(integrand_func, <span class="dv">0</span>, obs_statistics<span class="sc">$</span>ratio)</span>
-<span id="cb54-60"><a href="inference.html#cb54-60" tabindex="-1"></a>  extra <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">integrate</span>(integrand_func, obs_statistics<span class="sc">$</span>ratio, <span class="cn">Inf</span>)</span>
-<span id="cb54-61"><a href="inference.html#cb54-61" tabindex="-1"></a>  <span class="co">#return(1 - numerator$value / denominator$value)</span></span>
-<span id="cb54-62"><a href="inference.html#cb54-62" tabindex="-1"></a>  </span>
-<span id="cb54-63"><a href="inference.html#cb54-63" tabindex="-1"></a>  <span class="fu">return</span>(<span class="dv">1</span> <span class="sc">-</span> <span class="dv">1</span> <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> extra<span class="sc">$</span>value <span class="sc">/</span> numerator<span class="sc">$</span>value))</span>
-<span id="cb54-64"><a href="inference.html#cb54-64" tabindex="-1"></a>}</span></code></pre></div>
+<span id="cb54-25"><a href="inference.html#cb54-25" tabindex="-1"></a></span>
+<span id="cb54-26"><a href="inference.html#cb54-26" tabindex="-1"></a>  integrand_func <span class="ot">&lt;-</span> <span class="fu">Vectorize</span>(<span class="cf">function</span>(r) {</span>
+<span id="cb54-27"><a href="inference.html#cb54-27" tabindex="-1"></a>    <a href="inference.html#integrand">integrand</a>(<span class="at">r=</span>r,</span>
+<span id="cb54-28"><a href="inference.html#cb54-28" tabindex="-1"></a>              <span class="at">t=</span>t,</span>
+<span id="cb54-29"><a href="inference.html#cb54-29" tabindex="-1"></a>              <span class="at">x=</span>x,</span>
+<span id="cb54-30"><a href="inference.html#cb54-30" tabindex="-1"></a>              <span class="at">hc_sequence=</span>hc_sequence,</span>
+<span id="cb54-31"><a href="inference.html#cb54-31" tabindex="-1"></a>              <span class="at">obs_statistics=</span>obs_statistics,</span>
+<span id="cb54-32"><a href="inference.html#cb54-32" tabindex="-1"></a>              <span class="at">dist_func =</span> dist_func,</span>
+<span id="cb54-33"><a href="inference.html#cb54-33" tabindex="-1"></a>              <span class="at">linkage_func =</span> hc<span class="sc">$</span>linkage_func,</span>
+<span id="cb54-34"><a href="inference.html#cb54-34" tabindex="-1"></a>              <span class="at">tau =</span> hc<span class="sc">$</span>tau)</span>
+<span id="cb54-35"><a href="inference.html#cb54-35" tabindex="-1"></a>  })</span>
+<span id="cb54-36"><a href="inference.html#cb54-36" tabindex="-1"></a>  <span class="co"># rather than 1 - I(r)/I(infty), let's try 1 / [1 + I(r) / I(r to inf)]</span></span>
+<span id="cb54-37"><a href="inference.html#cb54-37" tabindex="-1"></a>  numerator <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">integrate</span>(integrand_func, <span class="dv">0</span>, obs_statistics<span class="sc">$</span>ratio)</span>
+<span id="cb54-38"><a href="inference.html#cb54-38" tabindex="-1"></a>  extra <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">integrate</span>(integrand_func, obs_statistics<span class="sc">$</span>ratio, <span class="cn">Inf</span>)</span>
+<span id="cb54-39"><a href="inference.html#cb54-39" tabindex="-1"></a>  <span class="fu">return</span>(<span class="dv">1</span> <span class="sc">-</span> <span class="dv">1</span> <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">+</span> extra<span class="sc">$</span>value <span class="sc">/</span> numerator<span class="sc">$</span>value))</span>
+<span id="cb54-40"><a href="inference.html#cb54-40" tabindex="-1"></a>}</span></code></pre></div>
 <p>Let’s try this out on our example.</p>
 <div class="sourceCode" id="cb55"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb55-1"><a href="inference.html#cb55-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> ex1<span class="sc">$</span>x</span>
 <span id="cb55-2"><a href="inference.html#cb55-2" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
@@ -621,8 +588,12 @@ X(r';\mathcal A_o^{(t)})=\sqrt{1+1/a} \cdot g(r')\cdot b+\sqrt{1+a}\cdot\sqrt{1-
 <span id="cb59-6"><a href="inference.html#cb59-6" tabindex="-1"></a>)</span>
 <span id="cb59-7"><a href="inference.html#cb59-7" tabindex="-1"></a><span class="fu">abline</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">col =</span> <span class="st">"red"</span>)</span></code></pre></div>
 <p><img src="_main_files/figure-html/unnamed-chunk-33-1.png" width="672"></p>
-<p>Hmm, apparently not!</p>
-<p>Let’s try Judy’s adaptive grid-based summation approach:</p>
+<p>Looks good.</p>
+<div id="an-alternative-grid-based-approach" class="section level4 hasAnchor" number="5.2.2.1">
+<h4>
+<span class="header-section-number">5.2.2.1</span> An alternative grid-based approach<a href="inference.html#an-alternative-grid-based-approach" class="anchor-section" aria-label="Anchor link to header"></a>
+</h4>
+<p>Let’s try out the adaptive grid-based summation approach that is used in the Python implementation:</p>
 <p>Suppose we have a pdf <span class="math inline">\(f\)</span> that we want to integrate, but we don’t know where its support is concentrated and its costly to evaluate. Our approach is the following:</p>
 <ul>
 <li>compute <span class="math inline">\(f\)</span> along a wide coarse grid.</li>
@@ -776,7 +747,7 @@ X(r';\mathcal A_o^{(t)})=\sqrt{1+1/a} \cdot g(r')\cdot b+\sqrt{1+a}\cdot\sqrt{1-
 <span id="cb64-25"><a href="inference.html#cb64-25" tabindex="-1"></a>    <span class="at">f =</span> integrand_func,</span>
 <span id="cb64-26"><a href="inference.html#cb64-26" tabindex="-1"></a>    <span class="at">wide_grid_min =</span> <span class="fl">0.00001</span>,</span>
 <span id="cb64-27"><a href="inference.html#cb64-27" tabindex="-1"></a>    <span class="at">wide_grid_max =</span> <span class="dv">180</span>,</span>
-<span id="cb64-28"><a href="inference.html#cb64-28" tabindex="-1"></a>    <span class="at">num_coarse =</span> <span class="dv">20</span>,</span>
+<span id="cb64-28"><a href="inference.html#cb64-28" tabindex="-1"></a>    <span class="at">num_coarse =</span> <span class="dv">200</span>, <span class="co"># making this larger improves approximation, but at cost to time</span></span>
 <span id="cb64-29"><a href="inference.html#cb64-29" tabindex="-1"></a>    <span class="at">num_fine =</span> <span class="dv">2000</span>,</span>
 <span id="cb64-30"><a href="inference.html#cb64-30" tabindex="-1"></a>    <span class="at">buffer =</span> <span class="dv">3</span></span>
 <span id="cb64-31"><a href="inference.html#cb64-31" tabindex="-1"></a>    )</span>
@@ -784,55 +755,64 @@ X(r';\mathcal A_o^{(t)})=\sqrt{1+1/a} \cdot g(r')\cdot b+\sqrt{1+a}\cdot\sqrt{1-
 <span id="cb64-33"><a href="inference.html#cb64-33" tabindex="-1"></a>  <span class="fu">return</span>(results<span class="sc">$</span>p_value)</span>
 <span id="cb64-34"><a href="inference.html#cb64-34" tabindex="-1"></a>}</span></code></pre></div>
 <p>Let’s see if the p-values have a uniform distribution under the global null:</p>
-<div class="sourceCode" id="cb65"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb65-1"><a href="inference.html#cb65-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
-<span id="cb65-2"><a href="inference.html#cb65-2" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">30</span></span>
-<span id="cb65-3"><a href="inference.html#cb65-3" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="dv">2</span></span>
-<span id="cb65-4"><a href="inference.html#cb65-4" tabindex="-1"></a>tt <span class="ot">&lt;-</span> <span class="dv">29</span> <span class="co"># test when there are only two clusters</span></span>
-<span id="cb65-5"><a href="inference.html#cb65-5" tabindex="-1"></a>tau <span class="ot">&lt;-</span> <span class="fl">0.05</span></span>
-<span id="cb65-6"><a href="inference.html#cb65-6" tabindex="-1"></a>nsim <span class="ot">&lt;-</span> <span class="dv">10</span></span>
-<span id="cb65-7"><a href="inference.html#cb65-7" tabindex="-1"></a>pvals <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="cn">NA</span>, nsim)</span>
-<span id="cb65-8"><a href="inference.html#cb65-8" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq</span>(nsim)) {</span>
-<span id="cb65-9"><a href="inference.html#cb65-9" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n <span class="sc">*</span> p), n, p)</span>
-<span id="cb65-10"><a href="inference.html#cb65-10" tabindex="-1"></a>  hc <span class="ot">&lt;-</span> <a href="randomized-hierarchical-clustering.html#hclust_randomized">hclust_randomized</a>(<span class="fu">dist</span>(x), <span class="at">tau =</span> tau)</span>
-<span id="cb65-11"><a href="inference.html#cb65-11" tabindex="-1"></a>  pvals[i] <span class="ot">&lt;-</span> <a href="inference.html#compute_pvalue">compute_pvalue</a>(tt, x, hc, <span class="at">dist_func =</span> dist)</span>
-<span id="cb65-12"><a href="inference.html#cb65-12" tabindex="-1"></a>}</span></code></pre></div>
-<div class="sourceCode" id="cb66"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb66-1"><a href="inference.html#cb66-1" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
-<span id="cb66-2"><a href="inference.html#cb66-2" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">30</span></span>
-<span id="cb66-3"><a href="inference.html#cb66-3" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="dv">2</span></span>
-<span id="cb66-4"><a href="inference.html#cb66-4" tabindex="-1"></a>tt <span class="ot">&lt;-</span> <span class="dv">29</span> <span class="co"># test when there are only two clusters</span></span>
-<span id="cb66-5"><a href="inference.html#cb66-5" tabindex="-1"></a>tau <span class="ot">&lt;-</span> <span class="fl">0.05</span></span>
-<span id="cb66-6"><a href="inference.html#cb66-6" tabindex="-1"></a>nsim <span class="ot">&lt;-</span> <span class="dv">10</span></span>
-<span id="cb66-7"><a href="inference.html#cb66-7" tabindex="-1"></a>pvals2 <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="cn">NA</span>, nsim)</span>
-<span id="cb66-8"><a href="inference.html#cb66-8" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq</span>(nsim)) {</span>
-<span id="cb66-9"><a href="inference.html#cb66-9" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n <span class="sc">*</span> p), n, p)</span>
-<span id="cb66-10"><a href="inference.html#cb66-10" tabindex="-1"></a>  hc <span class="ot">&lt;-</span> <a href="randomized-hierarchical-clustering.html#hclust_randomized">hclust_randomized</a>(<span class="fu">dist</span>(x), <span class="at">tau =</span> tau)</span>
-<span id="cb66-11"><a href="inference.html#cb66-11" tabindex="-1"></a>  pvals2[i] <span class="ot">&lt;-</span> <a href="inference.html#compute_pvalue_grid">compute_pvalue_grid</a>(tt, x, hc, <span class="at">dist_func =</span> dist)</span>
-<span id="cb66-12"><a href="inference.html#cb66-12" tabindex="-1"></a>}</span>
-<span id="cb66-13"><a href="inference.html#cb66-13" tabindex="-1"></a>pvals2</span></code></pre></div>
+<div class="sourceCode" id="cb65"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb65-1"><a href="inference.html#cb65-1" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="dv">30</span></span>
+<span id="cb65-2"><a href="inference.html#cb65-2" tabindex="-1"></a>p <span class="ot">&lt;-</span> <span class="dv">2</span></span>
+<span id="cb65-3"><a href="inference.html#cb65-3" tabindex="-1"></a>tt <span class="ot">&lt;-</span> <span class="dv">29</span> <span class="co"># test when there are only two clusters</span></span>
+<span id="cb65-4"><a href="inference.html#cb65-4" tabindex="-1"></a>tau <span class="ot">&lt;-</span> <span class="fl">0.05</span></span>
+<span id="cb65-5"><a href="inference.html#cb65-5" tabindex="-1"></a>nsim <span class="ot">&lt;-</span> <span class="dv">5</span></span>
+<span id="cb65-6"><a href="inference.html#cb65-6" tabindex="-1"></a></span>
+<span id="cb65-7"><a href="inference.html#cb65-7" tabindex="-1"></a><span class="co"># run <a href="inference.html#compute_pvalue">compute_pvalue</a>() </span></span>
+<span id="cb65-8"><a href="inference.html#cb65-8" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb65-9"><a href="inference.html#cb65-9" tabindex="-1"></a>pvals <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="cn">NA</span>, nsim)</span>
+<span id="cb65-10"><a href="inference.html#cb65-10" tabindex="-1"></a></span>
+<span id="cb65-11"><a href="inference.html#cb65-11" tabindex="-1"></a>time1 <span class="ot">&lt;-</span> <span class="fu">system.time</span>({</span>
+<span id="cb65-12"><a href="inference.html#cb65-12" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq</span>(nsim)) {</span>
+<span id="cb65-13"><a href="inference.html#cb65-13" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n <span class="sc">*</span> p), n, p)</span>
+<span id="cb65-14"><a href="inference.html#cb65-14" tabindex="-1"></a>  hc <span class="ot">&lt;-</span> <a href="randomized-hierarchical-clustering.html#hclust_randomized">hclust_randomized</a>(<span class="fu">dist</span>(x), <span class="at">tau =</span> tau)</span>
+<span id="cb65-15"><a href="inference.html#cb65-15" tabindex="-1"></a>  pvals[i] <span class="ot">&lt;-</span> <a href="inference.html#compute_pvalue">compute_pvalue</a>(tt, x, hc, <span class="at">dist_func =</span> dist)</span>
+<span id="cb65-16"><a href="inference.html#cb65-16" tabindex="-1"></a>}</span>
+<span id="cb65-17"><a href="inference.html#cb65-17" tabindex="-1"></a>})</span>
+<span id="cb65-18"><a href="inference.html#cb65-18" tabindex="-1"></a></span>
+<span id="cb65-19"><a href="inference.html#cb65-19" tabindex="-1"></a><span class="co"># run <a href="inference.html#compute_pvalue_grid">compute_pvalue_grid</a>() on identical data sets </span></span>
+<span id="cb65-20"><a href="inference.html#cb65-20" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">123</span>)</span>
+<span id="cb65-21"><a href="inference.html#cb65-21" tabindex="-1"></a>pvals2 <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="cn">NA</span>, nsim)</span>
+<span id="cb65-22"><a href="inference.html#cb65-22" tabindex="-1"></a>time2 <span class="ot">&lt;-</span> <span class="fu">system.time</span>({</span>
+<span id="cb65-23"><a href="inference.html#cb65-23" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq</span>(nsim)) {</span>
+<span id="cb65-24"><a href="inference.html#cb65-24" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rnorm</span>(n <span class="sc">*</span> p), n, p)</span>
+<span id="cb65-25"><a href="inference.html#cb65-25" tabindex="-1"></a>  hc <span class="ot">&lt;-</span> <a href="randomized-hierarchical-clustering.html#hclust_randomized">hclust_randomized</a>(<span class="fu">dist</span>(x), <span class="at">tau =</span> tau)</span>
+<span id="cb65-26"><a href="inference.html#cb65-26" tabindex="-1"></a>  pvals2[i] <span class="ot">&lt;-</span> <a href="inference.html#compute_pvalue_grid">compute_pvalue_grid</a>(tt, x, hc, <span class="at">dist_func =</span> dist)</span>
+<span id="cb65-27"><a href="inference.html#cb65-27" tabindex="-1"></a>}</span>
+<span id="cb65-28"><a href="inference.html#cb65-28" tabindex="-1"></a>})</span>
+<span id="cb65-29"><a href="inference.html#cb65-29" tabindex="-1"></a></span>
+<span id="cb65-30"><a href="inference.html#cb65-30" tabindex="-1"></a>pvals2</span></code></pre></div>
 <pre><code>## Narrow grid bounds: 1e-05 78.94614 
 ## Narrow grid bounds: 1e-05 49.40909 
 ## Narrow grid bounds: 1e-05 38.16707 
 ## Narrow grid bounds: 1e-05 86.30044 
-## Narrow grid bounds: 1e-05 82.97366 
-## Narrow grid bounds: 1e-05 33.6904 
-## Narrow grid bounds: 1e-05 62.74803 
-## Narrow grid bounds: 1e-05 64.60506 
-## Narrow grid bounds: 1e-05 49.70825 
-## Narrow grid bounds: 1e-05 94.64763</code></pre>
-<pre><code>##  [1] 0.3646756 0.9367895 0.3560783 0.6650629 0.9327211 0.7562997 0.4145354
-##  [8] 0.2708847 0.5355403 0.6729235</code></pre>
-<div class="sourceCode" id="cb69"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb69-1"><a href="inference.html#cb69-1" tabindex="-1"></a><span class="fu">qqplot</span>(</span>
-<span id="cb69-2"><a href="inference.html#cb69-2" tabindex="-1"></a>  (<span class="fu">ppoints</span>(<span class="fu">length</span>(pvals2))),</span>
-<span id="cb69-3"><a href="inference.html#cb69-3" tabindex="-1"></a>  (<span class="fu">sort</span>(pvals2)),</span>
-<span id="cb69-4"><a href="inference.html#cb69-4" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Expected"</span>,</span>
-<span id="cb69-5"><a href="inference.html#cb69-5" tabindex="-1"></a>  <span class="at">ylab =</span> <span class="st">"Observed"</span></span>
-<span id="cb69-6"><a href="inference.html#cb69-6" tabindex="-1"></a>)</span>
-<span id="cb69-7"><a href="inference.html#cb69-7" tabindex="-1"></a><span class="fu">abline</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">col =</span> <span class="st">"red"</span>)</span></code></pre></div>
-<p><img src="_main_files/figure-html/unnamed-chunk-39-1.png" width="672"></p>
+## Narrow grid bounds: 1e-05 82.97366</code></pre>
+<pre><code>## [1] 0.3650682 0.9794856 0.3717252 0.7178878 0.9779490</code></pre>
+<div class="sourceCode" id="cb68"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb68-1"><a href="inference.html#cb68-1" tabindex="-1"></a><span class="fu">qqplot</span>(</span>
+<span id="cb68-2"><a href="inference.html#cb68-2" tabindex="-1"></a>  (<span class="fu">ppoints</span>(<span class="fu">length</span>(pvals2))),</span>
+<span id="cb68-3"><a href="inference.html#cb68-3" tabindex="-1"></a>  (<span class="fu">sort</span>(pvals2)),</span>
+<span id="cb68-4"><a href="inference.html#cb68-4" tabindex="-1"></a>  <span class="at">xlab =</span> <span class="st">"Expected"</span>,</span>
+<span id="cb68-5"><a href="inference.html#cb68-5" tabindex="-1"></a>  <span class="at">ylab =</span> <span class="st">"Observed"</span>,</span>
+<span id="cb68-6"><a href="inference.html#cb68-6" tabindex="-1"></a>  <span class="at">main =</span> <span class="st">"Grid-based"</span></span>
+<span id="cb68-7"><a href="inference.html#cb68-7" tabindex="-1"></a>)</span>
+<span id="cb68-8"><a href="inference.html#cb68-8" tabindex="-1"></a><span class="fu">abline</span>(<span class="dv">0</span>, <span class="dv">1</span>, <span class="at">col =</span> <span class="st">"red"</span>)</span></code></pre></div>
+<p><img src="_main_files/figure-html/unnamed-chunk-38-1.png" width="672"></p>
 <p>In principle, this should be identical to the p-values we got with the other approach. Let’s check how close they are:</p>
-<div class="sourceCode" id="cb70"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb70-1"><a href="inference.html#cb70-1" tabindex="-1"></a><span class="fu">range</span>(pvals<span class="sc">-</span>pvals2)</span></code></pre></div>
-<pre><code>## [1] -0.04415934  0.05160059</code></pre>
+<div class="sourceCode" id="cb69"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb69-1"><a href="inference.html#cb69-1" tabindex="-1"></a><span class="fu">range</span>(pvals<span class="sc">-</span>pvals2)</span>
+<span id="cb69-2"><a href="inference.html#cb69-2" tabindex="-1"></a>time1</span>
+<span id="cb69-3"><a href="inference.html#cb69-3" tabindex="-1"></a>time2</span></code></pre></div>
+<pre><code>## [1] -0.0012242523  0.0007524335</code></pre>
+<pre><code>##    user  system elapsed 
+##   0.792   0.015   0.807</code></pre>
+<pre><code>##    user  system elapsed 
+##  25.932   0.420  26.362</code></pre>
+<p>This shows that we can get nearly the identical p-values, but that the grid-based approach may be substantially slower. Note: We can speed up the grid-based approach by taking <code>num_coarse</code> to be smaller; however, then the approximation suffers.</p>
+<p>For this reason, we will (for now) export <code><a href="inference.html#compute_pvalue">compute_pvalue</a>()</code> and not the grid-based approach.</p>
 
+</div>
 </div>
 </div>
 </div>

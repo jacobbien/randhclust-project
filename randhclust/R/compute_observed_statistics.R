@@ -25,8 +25,8 @@ compute_observed_statistics <- function(x, clust1, clust2) {
   xx2 <- scale(x[clust2, , drop = FALSE], center = TRUE, scale = FALSE)
   xbar_diff <- attr(xx1, "scaled:center") - attr(xx2, "scaled:center")
 
-  between <- sum(xbar_diff^2)
-  within <- sum(xx1^2) + sum(xx2^2)
+  # between <- sum(xbar_diff^2)
+  # within <- sum(xx1^2) + sum(xx2^2)
   
   # compute w and b as sparse matrices
   w <- b <- Matrix::Matrix(0, nrow = nrow(x), ncol = p)
@@ -35,10 +35,9 @@ compute_observed_statistics <- function(x, clust1, clust2) {
 
   b[clust1, ] <- 1/n1 * matrix(xbar_diff, nrow = n1, ncol = p, byrow = TRUE)
   b[clust2, ] <- -1/n2 * matrix(xbar_diff, nrow = n2, ncol = p, byrow = TRUE)
-  b <- b / sqrt(scaling)
+  b <- b / scaling # scaling = || nu ||^2
   
-  a <- between / within
-  ratio <- (n1 + n2 - 2) / scaling * a
-  #ratio <- (n1 + n2 - 2) * a
+  a <- sum(b^2) / sum(w^2)
+  ratio <- (n1 + n2 - 2) * a
   list(ratio = ratio, b = b, w = w, a = a)
 }

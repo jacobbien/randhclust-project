@@ -21,7 +21,6 @@ compute_selected_probs <- function(x_new, hc_sequence, dist_func, linkage_func, 
   d <- as.matrix(dist_func(x_new))
   d_clusts <- d
   for (i in seq(num_steps)) {
-    #print(d_clusts)
     # calculate probabilities
     probs <- get_merge_probs(d_clusts, tau)
    

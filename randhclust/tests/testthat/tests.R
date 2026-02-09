@@ -5,11 +5,11 @@ testthat::test_that("compute_observed_statistics() works", {
   clust1 <- 1:2
   clust2 <- 3
   # working directly from the formula in the paper:
-  scaling = 1/2 +1/1
+  scaling = 1/2 + 1/1
   bcss <- 2 * 1 / 3 * (0-6)^2
   wcss <- 1 + 1 + 0
   out <- compute_observed_statistics(x, clust1, clust2)
-  testthat::expect_equal(out$ratio, (3 - 2)* bcss / wcss)
+  testthat::expect_equal(out$ratio, (3 - 2) * bcss / wcss)
   testthat::expect_equal(out$a, sum(out$b^2) / sum(out$w^2))
   
   # and a two-dimensional example with four points:
@@ -18,12 +18,12 @@ testthat::test_that("compute_observed_statistics() works", {
               ncol = 2)
   clust1 <- 1:2
   clust2 <- 3:4
-  scaling = 1/2 +1/2
+  scaling = 1/2 + 1/2
   # working directly from the formula in the paper:
   bcss <- 2 * 2 / 4 * sum(c(6, 2)^2)
   wcss <- 1 + 1 + 0 + 0
   out <- compute_observed_statistics(x, clust1, clust2)
-  testthat::expect_equal(out$ratio, (4 - 2)* bcss / wcss)
+  testthat::expect_equal(out$ratio, (4 - 2) * bcss / wcss)
   testthat::expect_equal(out$a, sum(out$b^2) / sum(out$w^2))
 })
 
