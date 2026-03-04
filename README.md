@@ -7,19 +7,17 @@
 
 <!-- badges: end -->
 
-This repository contains the `randhclust` R package, which (once this
-repo is public) can be installed as follows:
+This repository contains the `randhclust` R package, which can be
+installed as follows:
 
 ``` r
 remotes::install_github("jacobbien/randhclust-project", subdir = "randhclust")
 ```
 
 It is implemented using literate programming with
-[litr](https://jacobbien.github.io/litr-project/). Thus, the source code
-is in the form of a bookdown, available in
-[create-randhclust/](create-randhclust/). For now, to read this as a
-bookdown, please download the repo and then open
-[docs/create/index.html](docs/create/index.html) in a browser.
+[litr](https://jacobbien.github.io/litr-project/). Thus, one can read
+the source code in the form of a bookdown
+[here](https://jacobbien.github.io/randhclust-project/create/).
 
 To modify the code in this R package, modify the `.Rmd` files in the
 [create-randhclust/](create-randhclust/) directory and then (from an R
@@ -33,6 +31,9 @@ fs::dir_copy("create-randhclust/randhclust", "randhclust", overwrite = TRUE)
 fs::dir_delete("create-randhclust/randhclust")
 fs::dir_delete("create-randhclust/_main_files/")
 ```
+
+These commands create the bookdown and R package, then move the bookdown
+to a location where it will be nicely rendered by Github.
 
 To install the latest version of `litr`, run
 
