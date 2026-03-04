@@ -476,7 +476,7 @@ Looks good.
 
 #### An alternative grid-based approach
 
-Let's try out the adaptive grid-based summation approach that is used in the Python implementation:
+Let's try out the adaptive grid-based summation approach that was initially used in the Python implementation:
 
 Suppose we have a pdf $f$ that we want to integrate, but we don't know where its support is concentrated and its costly to evaluate.  Our approach is the following:
 
