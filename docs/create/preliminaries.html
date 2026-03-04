@@ -12,7 +12,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="3 Preliminaries | Creating the randhclust R package">
 <meta name="author" content="Di Wu, Jacob Bien, Snigdha Panigrahi">
-<meta name="date" content="2026-02-09">
+<meta name="date" content="2026-02-11">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -214,30 +214,34 @@ X_i|Y_i=\ell \sim N_p(\mu_\ell, \sigma^2 I_p).
 <span id="cb9-8"><a href="preliminaries.html#cb9-8" tabindex="-1"></a><span class="co">#' @param clust2 n-vector of cluster indices (optional)</span></span>
 <span id="cb9-9"><a href="preliminaries.html#cb9-9" tabindex="-1"></a><span class="co">#' @param clust2_label name of clustering 2 (e.g. "estimated clustering"); optional</span></span>
 <span id="cb9-10"><a href="preliminaries.html#cb9-10" tabindex="-1"></a><span id="plot_clustered_data">plot_clustered_data</span> <span class="ot">&lt;-</span> <span class="cf">function</span>(x, clust1, <span class="at">clust1_label =</span> <span class="st">"clust1"</span>, <span class="at">clust2 =</span> <span class="cn">NULL</span>, <span class="at">clust2_label =</span> <span class="st">"clust2"</span>) {</span>
-<span id="cb9-11"><a href="preliminaries.html#cb9-11" tabindex="-1"></a>  dat <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tibble</span>(<span class="at">x1 =</span> x[, <span class="dv">1</span>], <span class="at">x2 =</span> x[, <span class="dv">2</span>], <span class="at">clust1 =</span> clust1)</span>
-<span id="cb9-12"><a href="preliminaries.html#cb9-12" tabindex="-1"></a>  dat <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
-<span id="cb9-13"><a href="preliminaries.html#cb9-13" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="sc">!!</span><span class="at">clust1_label :=</span> <span class="fu">paste0</span>(<span class="st">"clust"</span>, clust1))</span>
-<span id="cb9-14"><a href="preliminaries.html#cb9-14" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(clust2)) {</span>
-<span id="cb9-15"><a href="preliminaries.html#cb9-15" tabindex="-1"></a>    <span class="co"># show only one clustering</span></span>
-<span id="cb9-16"><a href="preliminaries.html#cb9-16" tabindex="-1"></a>    dat <span class="sc">%&gt;%</span> </span>
-<span id="cb9-17"><a href="preliminaries.html#cb9-17" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data<span class="sc">$</span>x1,</span>
-<span id="cb9-18"><a href="preliminaries.html#cb9-18" tabindex="-1"></a>                                   <span class="at">y =</span> .data<span class="sc">$</span>x2,</span>
-<span id="cb9-19"><a href="preliminaries.html#cb9-19" tabindex="-1"></a>                                   <span class="at">color =</span> .data[[clust1_label]])) <span class="sc">+</span> </span>
-<span id="cb9-20"><a href="preliminaries.html#cb9-20" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb9-21"><a href="preliminaries.html#cb9-21" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">coord_equal</span>()</span>
-<span id="cb9-22"><a href="preliminaries.html#cb9-22" tabindex="-1"></a>  }</span>
-<span id="cb9-23"><a href="preliminaries.html#cb9-23" tabindex="-1"></a>  <span class="cf">else</span> {</span>
-<span id="cb9-24"><a href="preliminaries.html#cb9-24" tabindex="-1"></a>    <span class="co"># show two clusterings</span></span>
-<span id="cb9-25"><a href="preliminaries.html#cb9-25" tabindex="-1"></a>    dat <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
-<span id="cb9-26"><a href="preliminaries.html#cb9-26" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="sc">!!</span><span class="at">clust2_label :=</span> <span class="fu">paste0</span>(<span class="st">"clust"</span>, clust2))</span>
-<span id="cb9-27"><a href="preliminaries.html#cb9-27" tabindex="-1"></a>    dat <span class="sc">%&gt;%</span> </span>
-<span id="cb9-28"><a href="preliminaries.html#cb9-28" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data<span class="sc">$</span>x1, <span class="at">y =</span> .data<span class="sc">$</span>x2,</span>
-<span id="cb9-29"><a href="preliminaries.html#cb9-29" tabindex="-1"></a>                 <span class="at">color =</span> .data[[clust1_label]],</span>
-<span id="cb9-30"><a href="preliminaries.html#cb9-30" tabindex="-1"></a>                 <span class="at">shape =</span> .data[[clust2_label]])) <span class="sc">+</span> </span>
-<span id="cb9-31"><a href="preliminaries.html#cb9-31" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb9-32"><a href="preliminaries.html#cb9-32" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">coord_equal</span>()</span>
-<span id="cb9-33"><a href="preliminaries.html#cb9-33" tabindex="-1"></a>  }</span>
-<span id="cb9-34"><a href="preliminaries.html#cb9-34" tabindex="-1"></a>}</span></code></pre></div>
+<span id="cb9-11"><a href="preliminaries.html#cb9-11" tabindex="-1"></a>  no_legend <span class="ot">&lt;-</span> <span class="fu">is.null</span>(clust1_label)</span>
+<span id="cb9-12"><a href="preliminaries.html#cb9-12" tabindex="-1"></a>  <span class="cf">if</span> (no_legend) clust1_label <span class="ot">&lt;-</span> <span class="st">"clust1"</span></span>
+<span id="cb9-13"><a href="preliminaries.html#cb9-13" tabindex="-1"></a>  dat <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tibble</span>(<span class="at">x1 =</span> x[, <span class="dv">1</span>], <span class="at">x2 =</span> x[, <span class="dv">2</span>], <span class="at">clust1 =</span> clust1)</span>
+<span id="cb9-14"><a href="preliminaries.html#cb9-14" tabindex="-1"></a>  dat <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
+<span id="cb9-15"><a href="preliminaries.html#cb9-15" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="sc">!!</span><span class="at">clust1_label :=</span> <span class="fu">paste0</span>(<span class="st">"clust"</span>, clust1))</span>
+<span id="cb9-16"><a href="preliminaries.html#cb9-16" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(clust2)) {</span>
+<span id="cb9-17"><a href="preliminaries.html#cb9-17" tabindex="-1"></a>    <span class="co"># show only one clustering</span></span>
+<span id="cb9-18"><a href="preliminaries.html#cb9-18" tabindex="-1"></a>    p <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
+<span id="cb9-19"><a href="preliminaries.html#cb9-19" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data<span class="sc">$</span>x1,</span>
+<span id="cb9-20"><a href="preliminaries.html#cb9-20" tabindex="-1"></a>                                   <span class="at">y =</span> .data<span class="sc">$</span>x2,</span>
+<span id="cb9-21"><a href="preliminaries.html#cb9-21" tabindex="-1"></a>                                   <span class="at">color =</span> .data[[clust1_label]])) <span class="sc">+</span> </span>
+<span id="cb9-22"><a href="preliminaries.html#cb9-22" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb9-23"><a href="preliminaries.html#cb9-23" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">coord_equal</span>()</span>
+<span id="cb9-24"><a href="preliminaries.html#cb9-24" tabindex="-1"></a>  }</span>
+<span id="cb9-25"><a href="preliminaries.html#cb9-25" tabindex="-1"></a>  <span class="cf">else</span> {</span>
+<span id="cb9-26"><a href="preliminaries.html#cb9-26" tabindex="-1"></a>    <span class="co"># show two clusterings</span></span>
+<span id="cb9-27"><a href="preliminaries.html#cb9-27" tabindex="-1"></a>    dat <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
+<span id="cb9-28"><a href="preliminaries.html#cb9-28" tabindex="-1"></a>      dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="sc">!!</span><span class="at">clust2_label :=</span> <span class="fu">paste0</span>(<span class="st">"clust"</span>, clust2))</span>
+<span id="cb9-29"><a href="preliminaries.html#cb9-29" tabindex="-1"></a>    p <span class="ot">&lt;-</span> dat <span class="sc">%&gt;%</span> </span>
+<span id="cb9-30"><a href="preliminaries.html#cb9-30" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">ggplot</span>(ggplot2<span class="sc">::</span><span class="fu">aes</span>(<span class="at">x =</span> .data<span class="sc">$</span>x1, <span class="at">y =</span> .data<span class="sc">$</span>x2,</span>
+<span id="cb9-31"><a href="preliminaries.html#cb9-31" tabindex="-1"></a>                 <span class="at">color =</span> .data[[clust1_label]],</span>
+<span id="cb9-32"><a href="preliminaries.html#cb9-32" tabindex="-1"></a>                 <span class="at">shape =</span> .data[[clust2_label]])) <span class="sc">+</span> </span>
+<span id="cb9-33"><a href="preliminaries.html#cb9-33" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb9-34"><a href="preliminaries.html#cb9-34" tabindex="-1"></a>      ggplot2<span class="sc">::</span><span class="fu">coord_equal</span>()</span>
+<span id="cb9-35"><a href="preliminaries.html#cb9-35" tabindex="-1"></a>  }</span>
+<span id="cb9-36"><a href="preliminaries.html#cb9-36" tabindex="-1"></a>  <span class="cf">if</span> (no_legend) p <span class="ot">&lt;-</span> p <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"none"</span>)</span>
+<span id="cb9-37"><a href="preliminaries.html#cb9-37" tabindex="-1"></a>  <span class="fu">return</span>(p)</span>
+<span id="cb9-38"><a href="preliminaries.html#cb9-38" tabindex="-1"></a>}</span></code></pre></div>
 <div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="preliminaries.html#cb10-1" tabindex="-1"></a>usethis<span class="sc">::</span><span class="fu">use_pipe</span>()</span>
 <span id="cb10-2"><a href="preliminaries.html#cb10-2" tabindex="-1"></a>usethis<span class="sc">::</span><span class="fu">use_import_from</span>(<span class="st">"rlang"</span>, <span class="st">".data"</span>)</span>
 <span id="cb10-3"><a href="preliminaries.html#cb10-3" tabindex="-1"></a>usethis<span class="sc">::</span><span class="fu">use_package</span>(<span class="st">"tibble"</span>)</span>

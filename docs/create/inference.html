@@ -12,7 +12,7 @@
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="5 Inference | Creating the randhclust R package">
 <meta name="author" content="Di Wu, Jacob Bien, Snigdha Panigrahi">
-<meta name="date" content="2026-02-09">
+<meta name="date" content="2026-02-11">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -806,9 +806,9 @@ X(r';\mathcal A_o^{(t)})=\sqrt{1+1/a} \cdot g(r')\cdot b+\sqrt{1+a}\cdot\sqrt{1-
 <span id="cb69-3"><a href="inference.html#cb69-3" tabindex="-1"></a>time2</span></code></pre></div>
 <pre><code>## [1] -0.0012242523  0.0007524335</code></pre>
 <pre><code>##    user  system elapsed 
-##   0.792   0.015   0.807</code></pre>
+##   0.801   0.013   0.815</code></pre>
 <pre><code>##    user  system elapsed 
-##  25.932   0.420  26.362</code></pre>
+##  26.027   0.328  26.375</code></pre>
 <p>This shows that we can get nearly the identical p-values, but that the grid-based approach may be substantially slower. Note: We can speed up the grid-based approach by taking <code>num_coarse</code> to be smaller; however, then the approximation suffers.</p>
 <p>For this reason, we will (for now) export <code><a href="inference.html#compute_pvalue">compute_pvalue</a>()</code> and not the grid-based approach.</p>
 
