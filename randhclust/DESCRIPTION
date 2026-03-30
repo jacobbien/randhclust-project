@@ -12,7 +12,7 @@ Description: This package implements randomized hierarchical clustering,
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
+RoxygenNote: 7.3.2
 Imports: 
     dplyr,
     ggplot2,
@@ -25,4 +25,4 @@ Suggests:
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 LitrVersionUsed: 0.9.3
-LitrId: cb216541589c9851d2ea21412c73dc27
+LitrId: ca2ab66a2a9b132277d5864bf44ccbd0

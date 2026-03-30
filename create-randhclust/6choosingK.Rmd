@@ -1,0 +1,273 @@
+# alpha-spending algorithm
+
+## Generating $\{\alpha_j\}$ 
+The alpha-spending algorithm takes in a pre-defined sequence $\{\alpha_j\}_{j=1}^{n-1}$ such that 
+$$\sum_{j=1}^{n-1} \alpha_j = \alpha,$$ 
+where $\alpha$ is the total significance level. 
+
+Here we provide a few examples of different generation process for the sequence.
+
+### Tiered $\alpha$ sequence
+
+Generate a list of n−1 significance levels that sum to a $\alpha$. It creates values at three different scales (large, medium, and small) using uniform random draws, then normalizes them so their total equals the desired overall alpha. A random seed is set for reproducibility.
+
+```{r}
+generate_alpha_list_tiered <- function(n = 30, total_alpha = 0.05, seed = 0) {
+  set.seed(seed)
+  length <- n - 1
+  group_size <- length %/% 3
+  large <- runif(5, 0.1, 0.5)
+  medium <- runif(5, 0.0005, 0.002)
+  small <- runif(length - 10, 1e-7, 5e-6)
+  alpha_raw <- c(large, medium, small)
+  alpha_list <- total_alpha * alpha_raw / sum(alpha_raw)
+  return(alpha_list)
+}
+```
+
+### Exponentially decaying sequence
+
+Generate n−1 alpha values that decay exponentially over steps, with earlier entries receiving larger weight. The values are scaled so that their total equals a specified overall alpha level.
+
+```{r}
+generate_alpha_list_exp <- function(n = 30, total_alpha = 0.05, decay_rate = 0.5) {
+  length <- n - 1
+  i <- 0:(length - 1)
+  alpha_raw <- exp(-decay_rate * i)
+  alpha_list <- total_alpha * alpha_raw / sum(alpha_raw)
+  return(alpha_list)
+}
+```
+
+## Finding best K
+
+Algorithm 2 describes the $\alpha$-spending algorithm that utilizing our valid p-values to decide the optimal number of clusters $K$. We implement this procedure and illustrate its performance through several examples.
+
+```{r}
+labels_from_clustering <- function(clustering, n) {
+  labels <- integer(n)
+  for (k in seq_along(clustering)) {
+    labels[clustering[[k]]] <- k
+  }
+  labels
+}
+
+find_best_K <- function(x, tau, alpha_list, n_threshold = 10, hard_threshold = 5,
+                        total_alpha = 0.05, dist_func = dist) {
+  n <- nrow(x)
+  
+  if (!isTRUE(all.equal(sum(alpha_list), total_alpha, tolerance = 1e-8))) {
+    stop(sprintf(
+      "alpha_list should sum to total_alpha = %s, but got %.6f instead.",
+      total_alpha, sum(alpha_list)
+    ))
+  }
+  
+  if (length(alpha_list) != n - 1) {
+    stop("The length of alpha_list should be n - 1.")
+  }
+  
+  hc <- hclust_randomized(dist_func(x), tau = tau)
+  hc_sequence <- get_hclust_sequence(hc)
+  
+  p_values <- numeric(0)
+  alpha_seq <- numeric(0)
+  K_hat <- 1
+  labels_est <- rep(1L, n)
+  
+  alpha_pool <- alpha_list
+  
+  for (t in 1:(n - 1)) {
+    c1 <- hc_sequence$merges[t, 1]
+    c2 <- hc_sequence$merges[t, 2]
+    
+    clust1 <- hc_sequence$clusts[[t]][[c1]]
+    clust2 <- hc_sequence$clusts[[t]][[c2]]
+    
+    n1 <- length(clust1)
+    n2 <- length(clust2)
+    
+    if (min(n1, n2) <= hard_threshold) {
+      pval <- 1
+      alpha <- 0
+    } else {
+      if (min(n1, n2) <= n_threshold) {
+        idx <- which.min(alpha_pool)
+        alpha <- alpha_pool[idx]
+      } else {
+        idx <- which.max(alpha_pool)
+        alpha <- alpha_pool[idx]
+      }
+      
+      pval <- compute_pvalue(
+        t = t,
+        x = x,
+        hc = hc,
+        hc_sequence = hc_sequence,
+        dist_func = dist_func
+      )
+      
+      alpha_pool <- alpha_pool[-idx]
+    }
+    
+    p_values <- c(p_values, pval)
+    alpha_seq <- c(alpha_seq, alpha)
+    
+    if (pval < alpha) {
+      K_hat <- n - t + 1
+      labels_est <- labels_from_clustering(hc_sequence$clusts[[t]], n)
+      return(list(
+        K_hat = K_hat,
+        p_values = p_values,
+        alpha_seq = alpha_seq,
+        labels_est = labels_est,
+        hc = hc,
+        hc_sequence = hc_sequence
+      ))
+    }
+  }
+  
+  list(
+    K_hat = K_hat,
+    p_values = p_values,
+    alpha_seq = alpha_seq,
+    labels_est = labels_est,
+    hc = hc,
+    hc_sequence = hc_sequence
+  )
+}
+```
+
+### Examples 
+
+#### Example 1: 2 real clusters
+Use example 1 data as an example, where the data has 2 clusters.
+```{r}
+set.seed(123)
+X = ex1$x
+n=nrow(X)
+alpha_list = generate_alpha_list_exp(n=nrow(X))
+chooseK <- find_best_K(X,tau=0.1,alpha_list = alpha_list, n_threshold =as.integer(0.1*n), hard_threshold = as.integer(0.05*n))
+print(chooseK$K_hat)
+```
+
+#### Example 2: 3 clusters
+
+The following function generates a dataset with three clusters in $\mathbb{R}^p$, each containing $n/3$ observations. The cluster centers are positioned to form a roughly equilateral triangle (in the first two coordinates when $p \geq 2$), with separation controlled by the parameter $\delta$. Specifically, one cluster is centered at $(-\delta/2, 0, \dots)$, another at $(0, \dots, \sqrt{3}\delta/2)$, and the third at $(\delta/2, 0, \dots)$.
+
+Each data point is generated from a multivariate normal distribution with identity covariance scaled by $\sigma^2$, so $\sigma$ controls the spread of each cluster. The function returns the combined dataset along with the true cluster labels (if `return_labels = TRUE`), which can be used to evaluate clustering performance.
+```{r}
+generate_3cluster_data <- function(n = 30, p = 2, delta = 5.0, sigma = 1.0,
+                                   random_state = NULL, return_labels = TRUE) {
+  if (n %% 3 != 0) {
+    stop("n must be divisible by 3.")
+  }
+  
+  if (!is.null(random_state)) {
+    set.seed(random_state)
+  }
+  
+  n_cluster <- n %/% 3
+  
+  mu1 <- rep(0, p)
+  mu1[1] <- -delta / 2
+  
+  mu2 <- rep(0, p)
+  mu2[p] <- sqrt(3) * delta / 2
+  
+  mu3 <- rep(0, p)
+  mu3[1] <- delta / 2
+  
+  X1 <- matrix(rnorm(n_cluster * p, mean = mu1, sd = sigma),
+               nrow = n_cluster, ncol = p, byrow = TRUE)
+  X2 <- matrix(rnorm(n_cluster * p, mean = mu2, sd = sigma),
+               nrow = n_cluster, ncol = p, byrow = TRUE)
+  X3 <- matrix(rnorm(n_cluster * p, mean = mu3, sd = sigma),
+               nrow = n_cluster, ncol = p, byrow = TRUE)
+  
+  X1 <- sweep(X1, 2, mu1, "+")
+  X2 <- sweep(X2, 2, mu2, "+")
+  X3 <- sweep(X3, 2, mu3, "+")
+  
+  X <- rbind(X1, X2, X3)
+  labels <- c(rep(0, n_cluster), rep(1, n_cluster), rep(2, n_cluster))
+  
+  if (return_labels) {
+    return(list(X = X, labels = labels))
+  } else {
+    return(X)
+  }
+}
+```
+
+```{r}
+set.seed(123)
+X = generate_3cluster_data(delta=8.0,return_labels = FALSE)
+n=nrow(X)
+alpha_list = generate_alpha_list_exp(n=nrow(X))
+chooseK <- find_best_K(X,tau=0.1,alpha_list = alpha_list, n_threshold =as.integer(0.1*n), hard_threshold = as.integer(0.05*n))
+print(chooseK$K_hat)
+```
+
+In both examples, the estimated number of clusters $\hat{K}$ corresponds to the true number of clusters.
+
+### FWER control
+
+Next, we verify the FWER control of the $\alpha$-spending algorithm. We generate data under the null where no clustering structure present. Selecting $\hat{K}>1$ in this setting is equivalent to rejecting at least one true null hypothesis in the merge sequence. The empirical FWER is therefore the proportion of repetitions for which $\hat{K}>1$. Here, we use $\tau = 0.01$ as an example.
+
+```{r}
+compute_FWER <- function(tau=0.1,n=30,p=2,sigma=1,total_alpha=0.05, n_trials=500){
+  K_hats = c()
+  error = c()
+  for (i in 1:n_trials){
+    X_null = MASS::mvrnorm(n = n, mu = rep(0,p), Sigma = sigma**2 * diag(p))
+    alpha_list = generate_alpha_list_exp(n,total_alpha,decay_rate = 0.5)
+    chooseK <- find_best_K(X_null,tau=tau, alpha_list = alpha_list, 
+                           n_threshold =as.integer(0.4*n), 
+                           hard_threshold = as.integer(0.1*n))
+    K_hat = chooseK$K_hat
+    K_hats = c(K_hats, K_hat)
+    error = c(error, as.integer(K_hat > 1))
+  }
+  fwer = mean(error)
+  return(list(fwer = fwer, K_hats = K_hats))
+}
+```
+
+```{r}
+set.seed(123)
+compute_FWER(tau=0.01)$fwer
+```
+
+### Choosking K using histogram
+
+We can repeat the $\alpha$-spending algorithm multiple time and decide the optimal K by choosing the most frequent chosen value. 
+
+```{r}
+get_optimal_K <- function(X, tau, alpha_list, n_threshold, hard_threshold,num_trials = 100,
+                        total_alpha = 0.05){
+  K_hats = rep(0, num_trials)
+  n = nrow(X)
+  for(i in 1:num_trials){
+    K_hats[i] = find_best_K(X,tau=tau, alpha_list = alpha_list, 
+                           n_threshold =n_threshold, 
+                           hard_threshold =  hard_threshold)$K_hat
+  }
+  return(list(K_hat =  as.numeric(names(which.max(table(K_hats)))), K_hats = K_hats))
+}
+```
+
+
+Use the data with 3 clusters as example and evaluate the accuracy of our estimation.
+```{r}
+set.seed(123)
+X = generate_3cluster_data(delta=8.0,return_labels = FALSE)
+n=nrow(X)
+alpha_list = generate_alpha_list_exp(n=nrow(X))
+get_opt_obj = get_optimal_K(X, tau=0.1, alpha_list = alpha_list, n_threshold = as.integer(0.2*n), hard_threshold = as.integer(0.05*n))
+K_est = get_opt_obj$K_hat
+K_list = get_opt_obj$K_hats
+print(K_est)
+```
+
+

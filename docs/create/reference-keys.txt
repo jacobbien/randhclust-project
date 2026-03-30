@@ -16,4 +16,14 @@ conditionally-valid-p-value
 forming-integrand
 computing-p-value
 an-alternative-grid-based-approach
+alpha-spending-algorithm
+generating-alpha_j
+tiered-alpha-sequence
+exponentially-decaying-sequence
+finding-best-k
+examples
+example-1-2-real-clusters
+example-2-3-clusters
+fwer-control
+choosking-k-using-histogram
 conclude
